@@ -10,19 +10,31 @@
     <script src="./des.js"></script>
     <script>
         var Status = {
-            get available() { return 0; },
-            get unavailable() { return 1; },
-            get broken() { return 2; },
-            get unknown() { return 3; }
+            get available() { return 1; },
+            get unavailable() { return 2; },
+            get broken() { return 3; },
+            get unknown() { return 0; }
         };
         class LaundryInfo {
             constructor(devid, notify) {
                 this.devid = devid;
                 this.notify = notify;
+                this.interested = false;
                 this._status = Status.unknown;
                 this.data = {};
                 this.element = document.createElement("tr");
+                this.element.innerHTML = `
+                    <td>未知(${this.devid})</td>
+                    <td><div class="checkbox-default"><input type="checkbox" id="checkbox-${this.devid}"></input></div></td>
+                    <td>请求中</td>
+                    <td>未知</td>`;
                 document.querySelector("#overview tbody").appendChild(this.element);
+                document.getElementById(`checkbox-${this.devid}`).addEventListener("change", (event) => {
+                    this.interested = event.target.checked;
+                    if (this.interested) {
+                        this.check();
+                    }
+                });
             }
             set_status(newstatus) {
                 if (newstatus < this._status) {
@@ -43,14 +55,44 @@
                 } else {
                     this.set_status(Status.unknown);
                 }
-                this.element.innerHTML = `<td>${this.data.data.location}</td>
+                this.element.innerHTML = `
+                    <td>${this.data.data.location}</td>
+                    <td><div class="checkbox-default"><input type="checkbox" id="checkbox-${this.devid}"></input></div></td>
                     <td>${this.data.data.statusName}</td>
                     <td>${this.data.data.timeRemaining}</td>`;
+                document.getElementById(`checkbox-${this.devid}`).addEventListener("change", (event) => {
+                    this.interested = event.target.checked;
+                    this.setup_check();
+                });
+            }
+            setup_check() {
+                if (this.interested) {
+                    // 如果可用, 两分钟检查一次
+                    if (this._status == Status.available) {
+                        setTimeout(() => { this.check() }, 120000);
+                    } else {
+                        try {
+                            // 尝试在时间到后检查
+                            setTimeout(() => { this.check() }, 60000 * (Number(this.data.data.timeRemaining)) + 1000);
+                            console.log(`已设置在${(Number(this.data.data.timeRemaining))}分钟后检查${this.devid}机器`);
+                        } catch (error) {
+                            // 出现错误只好一分钟一次了
+                            setTimeout(() => { this.check() }, 60000);
+                        }
+                    }
+                }
             }
             check() {
                 var url = `http://www.saywash.com/saywash/WashCallApi/common/laundry/getDeviceInfo.api?deviceQRCode=${this.devid}&ssid=${getTime()}&_=${(new Date()).valueOf()}`;
                 var cors = `https://cors-anywhere.herokuapp.com/${url}`;
-                $.getJSON(cors, (data) => { this.update(data); });
+                $.getJSON(cors, (data) => { this.update(data); this.setup_check(); }).fail(() => {
+                    this.element.innerHTML = `
+                        <td>未知(${this.devid})</td>
+                        <td><div class="checkbox-default"><input type="checkbox" id="checkbox-${this.devid}"></input></div></td>
+                        <td>请求失败</td>
+                        <td>未知</td>`;
+                    this.setup_check();
+                });
             }
         }
         function do_notify(entity) {
@@ -64,7 +106,7 @@
         }
         function notify(entity) {
             if (entity._status === Status.available) {
-                console.log("signal");
+                console.log("sent a notification");
                 if (!("Notification" in window)) {
                     alert("This browser does not support desktop notification, try FireFox ?");
                 }
@@ -87,13 +129,15 @@
         ];
         document.addEventListener("DOMContentLoaded", () => {
             ls = devs.map((d) => { return new LaundryInfo(d, notify); });
-            function check() {
-                ls.forEach(element => {
-                    element.check();
-                });
-            }
-            check();
-            setInterval(check, 60000);
+            ls.forEach(element => { element.check(); });
+            // function check() {
+            //     ls.forEach(element => {
+            //         if (element.interested) {
+            //             element.check();
+            //         }
+            //     });
+            // }
+            // setInterval(check, 60000);
         });
     </script>
 </head>
@@ -118,6 +162,7 @@
                             <thead>
                                 <tr>
                                     <td>位置</td>
+                                    <td>可用时提醒</td>
                                     <td>状态</td>
                                     <td>剩余时间</td>
                                 </tr>
