@@ -132,14 +132,12 @@
         document.addEventListener("DOMContentLoaded", () => {
             ls = devs.map((d) => { return new LaundryInfo(d, notify); });
             ls.forEach(element => { element.check(); });
-            // function check() {
-            //     ls.forEach(element => {
-            //         if (element.interested) {
-            //             element.check();
-            //         }
-            //     });
-            // }
-            // setInterval(check, 60000);
+            if (!("Notification" in window)) {
+                alert("This browser does not support desktop notification, try FireFox ?");
+            }
+            while (Notification.permission !== "granted") {
+                Notification.requestPermission(function (permission) { });
+            }
         });
     </script>
 </head>
