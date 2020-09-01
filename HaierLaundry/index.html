@@ -13,37 +13,39 @@
             get broken() { return 2; },
             get unknown() { return 3; }
         };
-        function LaundryInfo(devid, notify) {
-            this.devid = devid;
-            this.notify = notify;
-            this._status = Status.unknown;
-            this.data = {};
-        };
-        LaundryInfo.prototype.set_status = function (newstatus) {
-            if (newstatus < this._status) {
+        class LaundryInfo {
+            constructor(devid, notify) {
+                this.devid = devid;
+                this.notify = notify;
+                this._status = Status.unknown;
+                this.data = {};
+            }
+            set_status(newstatus) {
+                if (newstatus < this._status) {
+                    this._status = newstatus;
+                    this.notify(this);
+                }
                 this._status = newstatus;
-                this.notify(this);
+                console.log(this.devid, this._status, this.data.data.statusName);
             }
-            this._status = newstatus;
-            console.log(this.devid, this._status, this.data.data.statusName);
-        };
-        LaundryInfo.prototype.update = function (data) {
-            this.data = data;
-            if (this.data.data.statusName === "空闲") {
-                this.set_status(Status.available);
-            } else if (this.data.data.statusName === "使用中") {
-                this.set_status(Status.unavailable);
-            } else if (this.data.data.statusName === "故障") {
-                this.set_status(Status.broken);
-            } else {
-                this.set_status(Status.unknown);
+            update(data) {
+                this.data = data;
+                if (this.data.data.statusName === "空闲") {
+                    this.set_status(Status.available);
+                } else if (this.data.data.statusName === "使用中") {
+                    this.set_status(Status.unavailable);
+                } else if (this.data.data.statusName === "故障") {
+                    this.set_status(Status.broken);
+                } else {
+                    this.set_status(Status.unknown);
+                }
             }
-        };
-        LaundryInfo.prototype.check = function () {
-            var url = `http://www.saywash.com/saywash/WashCallApi/common/laundry/getDeviceInfo.api?deviceQRCode=${this.devid}&ssid=${getTime()}&_=${(new Date()).valueOf()}`;
-            var cors = `https://cors-anywhere.herokuapp.com/${url}`;
-            $.getJSON(cors, (data) => { this.update(data); });
-        };
+            check() {
+                var url = `http://www.saywash.com/saywash/WashCallApi/common/laundry/getDeviceInfo.api?deviceQRCode=${this.devid}&ssid=${getTime()}&_=${(new Date()).valueOf()}`;
+                var cors = `https://cors-anywhere.herokuapp.com/${url}`;
+                $.getJSON(cors, (data) => { this.update(data); });
+            }
+        }
         function do_notify(entity) {
             var notification = new Notification(`${entity.data.data.location}的洗衣机已经可以使用`, {
                 icon: `https://api.zsq.im/qrcode/?margin=2&text=http://uhome.haier.net/download/app/washcall/index.html?devid=${entity.devid}`,
@@ -71,7 +73,10 @@
         devs = [
             "BL1510240019",
             "BL1610150017",
-            "BL1510200077"
+            "BL1510200077",
+            "BL1510250100",
+            "BL1510230004",
+            "BLA1608280774"
         ];
         ls = devs.map((d) => { return new LaundryInfo(d, notify); });
         function check() {
