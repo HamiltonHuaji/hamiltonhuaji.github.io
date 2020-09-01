@@ -60,7 +60,8 @@
                     <td>${this.data.data.location}</td>
                     <td><div class="checkbox-default"><input type="checkbox" id="checkbox-${this.devid}"></input></div></td>
                     <td>${this.data.data.statusName}</td>
-                    <td>${this.data.data.timeRemaining}</td>`;
+                    <td>${Number(this.data.data.timeRemaining) > 0 ?
+                        (new Date((new Date()).getTime() + 60 * 1000 * this.data.data.timeRemaining * 1.87)).toLocaleTimeString('zh-CN') : "---"}</td>`;
                 document.getElementById(`checkbox-${this.devid}`).addEventListener("change", (event) => {
                     this.interested = event.target.checked;
                     this.setup_check();
@@ -165,7 +166,7 @@
                                     <td>位置</td>
                                     <td>可用时提醒</td>
                                     <td>状态</td>
-                                    <td>剩余时间</td>
+                                    <td>预计可用时间</td>
                                 </tr>
                             </thead>
                             <tbody></tbody>
