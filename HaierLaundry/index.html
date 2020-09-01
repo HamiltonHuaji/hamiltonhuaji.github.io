@@ -130,14 +130,14 @@
             "BLA1608280774"
         ];
         document.addEventListener("DOMContentLoaded", () => {
-            ls = devs.map((d) => { return new LaundryInfo(d, notify); });
-            ls.forEach(element => { element.check(); });
             if (!("Notification" in window)) {
                 alert("This browser does not support desktop notification, try FireFox ?");
             }
             while (Notification.permission !== "granted") {
                 Notification.requestPermission(function (permission) { });
             }
+            ls = devs.map((d) => { return new LaundryInfo(d, notify); });
+            ls.forEach(element => { element.check(); });
         });
     </script>
 </head>
