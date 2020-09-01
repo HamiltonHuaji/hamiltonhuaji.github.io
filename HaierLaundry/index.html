@@ -90,7 +90,7 @@
                 var cors = `https://cors-anywhere.herokuapp.com/${url}`;
                 $.getJSON(cors, (data) => { this.update(data); this.setup_check(); }).fail(() => {
                     this.element.innerHTML = `
-                    <td><a href="https://api.zsq.im/qrcode/?margin=2&text=http://uhome.haier.net/download/app/washcall/index.html?devid=${this.devid}" target="_blank">${this.data.data.location}</a></td>
+                    <td><a href="https://api.zsq.im/qrcode/?margin=2&text=http://uhome.haier.net/download/app/washcall/index.html?devid=${this.devid}" target="_blank">${this.devid}</a></td>
                         <td><div class="checkbox-default"><input type="checkbox" id="checkbox-${this.devid}"></input></div></td>
                         <td>请求失败</td>
                         <td>未知</td>`;
