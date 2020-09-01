@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+
+<head>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="./des.js"></script>
+    <script>
+        var Status = {
+            available: 0,
+            unavailable: 1,
+            broken: 2,
+            unknown: 3
+        };
+        function LaundryInfo(devid, notify) {
+            this.devid = devid;
+            this.notify = notify;
+            this.status = Status.unknown;
+        };
+        LaundryInfo.prototype.check = function () {
+            var url = `https://cors-anywhere.herokuapp.com/http://www.saywash.com/saywash/WashCallApi/common/laundry/getDeviceInfo.api?deviceQRCode=${this.devid}&ssid=${getTime()}&_=${(new Date()).valueOf()}`;
+            console.log(url);
+            obj = this;
+            $.getJSON(url, function (data) {
+                if (data.data.statusName === "空闲") {
+                    this.notify(obj);
+                }
+            });
+        };
+        function xxx(){
+            l = new LaundryInfo("BL1510240019", (e)=>{console.log(e);});
+            l.check();
+        }
+    </script>
+</head>
+<body>
+    <div onreadystatechange="xxx();"></div>
+</body>
