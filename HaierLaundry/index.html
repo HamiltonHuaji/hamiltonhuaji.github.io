@@ -25,7 +25,7 @@
                 this.data = {};
                 this.element = document.createElement("tr");
                 this.element.innerHTML = `
-                    <td>未知(${this.devid})</td>
+                    <td><a href="https://api.zsq.im/qrcode/?margin=2&text=http://uhome.haier.net/download/app/washcall/index.html?devid=${this.devid}" target="_blank">${this.devid}</a></td>
                     <td><div class="checkbox-default"><input type="checkbox" id="checkbox-${this.devid}"></input></div></td>
                     <td>请求中</td>
                     <td>未知</td>`;
@@ -57,7 +57,7 @@
                     this.set_status(Status.unknown);
                 }
                 this.element.innerHTML = `
-                    <td>${this.data.data.location}</td>
+                    <td><a href="https://api.zsq.im/qrcode/?margin=2&text=http://uhome.haier.net/download/app/washcall/index.html?devid=${this.devid}" target="_blank">${this.data.data.location}</a></td>
                     <td><div class="checkbox-default"><input type="checkbox" id="checkbox-${this.devid}"></input></div></td>
                     <td>${this.data.data.statusName}</td>
                     <td>${Number(this.data.data.timeRemaining) > 0 ?
@@ -89,7 +89,7 @@
                 var cors = `https://cors-anywhere.herokuapp.com/${url}`;
                 $.getJSON(cors, (data) => { this.update(data); this.setup_check(); }).fail(() => {
                     this.element.innerHTML = `
-                        <td>未知(${this.devid})</td>
+                    <td><a href="https://api.zsq.im/qrcode/?margin=2&text=http://uhome.haier.net/download/app/washcall/index.html?devid=${this.devid}" target="_blank">${this.data.data.location}</a></td>
                         <td><div class="checkbox-default"><input type="checkbox" id="checkbox-${this.devid}"></input></div></td>
                         <td>请求失败</td>
                         <td>未知</td>`;
