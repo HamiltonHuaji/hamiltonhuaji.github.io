@@ -58,10 +58,11 @@
                 }
                 this.element.innerHTML = `
                     <td><a href="https://api.zsq.im/qrcode/?margin=2&text=http://uhome.haier.net/download/app/washcall/index.html?devid=${this.devid}" target="_blank">${this.data.data.location}</a></td>
-                    <td><div class="checkbox-default"><input type="checkbox" id="checkbox-${this.devid}" checked=${this.interested}></input></div></td>
+                    <td><div class="checkbox-default"><input type="checkbox" id="checkbox-${this.devid}"></input></div></td>
                     <td>${this.data.data.statusName}</td>
                     <td>${Number(this.data.data.timeRemaining) > 0 ?
                         (new Date((new Date()).getTime() + 60 * 1000 * this.data.data.timeRemaining * 1.87)).toLocaleTimeString('zh-CN') : "---"}</td>`;
+                document.getElementById(`checkbox-${this.devid}`).checked = this.interested;
                 document.getElementById(`checkbox-${this.devid}`).addEventListener("change", (event) => {
                     this.interested = event.target.checked;
                     this.setup_check();
@@ -90,9 +91,10 @@
                 $.getJSON(cors, (data) => { this.update(data); this.setup_check(); }).fail(() => {
                     this.element.innerHTML = `
                     <td><a href="https://api.zsq.im/qrcode/?margin=2&text=http://uhome.haier.net/download/app/washcall/index.html?devid=${this.devid}" target="_blank">${this.data.data.location}</a></td>
-                        <td><div class="checkbox-default"><input type="checkbox" id="checkbox-${this.devid}" checked=${this.interested}></input></div></td>
+                        <td><div class="checkbox-default"><input type="checkbox" id="checkbox-${this.devid}"></input></div></td>
                         <td>请求失败</td>
                         <td>未知</td>`;
+                    document.getElementById(`checkbox-${this.devid}`).checked = this.interested;
                     this.setup_check();
                 });
             }
