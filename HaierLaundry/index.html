@@ -26,7 +26,7 @@
                 this.element = document.createElement("tr");
                 this.element.innerHTML = `
                     <td><a href="https://api.zsq.im/qrcode/?margin=2&text=http://uhome.haier.net/download/app/washcall/index.html?devid=${this.devid}" target="_blank">${this.devid}</a></td>
-                    <td><div class="checkbox-default"><input type="checkbox" id="checkbox-${this.devid}" checked=${this.interested}></input></div></td>
+                    <td><div class="checkbox-default"><input type="checkbox" id="checkbox-${this.devid}" checked=false></input></div></td>
                     <td>请求中</td>
                     <td>未知</td>`;
                 document.querySelector("#overview tbody").appendChild(this.element);
