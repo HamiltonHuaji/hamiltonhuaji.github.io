@@ -87,7 +87,7 @@
             }
             check() {
                 var url = `http://www.saywash.com/saywash/WashCallApi/common/laundry/getDeviceInfo.api?deviceQRCode=${this.devid}&ssid=${getTime()}&_=${(new Date()).valueOf()}`;
-                var cors = `https://cors-anywhere.herokuapp.com/${url}`;
+                var cors = `https://api.zsq.im/cors/?url=${url}`;
                 $.getJSON(cors, (data) => { this.update(data); this.setup_check(); }).fail(() => {
                     this.element.innerHTML = `
                     <td><a href="https://api.zsq.im/qrcode/?margin=2&text=http://uhome.haier.net/download/app/washcall/index.html?devid=${this.devid}" target="_blank">${this.devid}</a></td>
