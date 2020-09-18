@@ -75,9 +75,10 @@
                         setTimeout(() => { this.check() }, 120000);
                     } else {
                         try {
-                            // 尝试在时间到后检查
-                            setTimeout(() => { this.check() }, 60000 * (Number(this.data.data.timeRemaining)) + 1000);
-                            console.log(`已设置在${(Number(this.data.data.timeRemaining))}分钟后检查${this.devid}机器`);
+                            setTimeout(() => { this.check() }, 60000);
+                            // // 尝试在时间到后检查
+                            // setTimeout(() => { this.check() }, 60000 * (Number(this.data.data.timeRemaining)) + 1000);
+                            // console.log(`已设置在${(Number(this.data.data.timeRemaining))}分钟后检查${this.devid}机器`);
                         } catch (error) {
                             // 出现错误只好一分钟一次了
                             setTimeout(() => { this.check() }, 60000);
@@ -148,7 +149,7 @@
     <div class="navbar navbar-expand-md navbar-light bg-light mb-4">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
-                有兄弟才能洗衣服! 一刀999, 等你来玩!
+                请不要在洗衣机里洗鞋.
             </a>
         </div>
     </div>
@@ -176,6 +177,9 @@
             </main>
         </div>
     </div>
+    <footer display="none" class="page-footer font-small">
+        <div class="footer-copyright text-center py-3">Powered by HamiltonHuaji & Mimi with ❤</div>
+    </footer>
 </body>
 
 </html>
