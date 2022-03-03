@@ -24,7 +24,6 @@ jobs:
         with:
           node-version: '14'
 
-            # 安装依赖
       - name: Install Dependencies
         run: |
           npm install
