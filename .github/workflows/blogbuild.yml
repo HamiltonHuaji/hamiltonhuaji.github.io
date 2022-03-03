@@ -1,6 +1,7 @@
 name: Hexo Deploy
 on:
-  push:
+  - workflow_dispatch
+  - push:
     branches:
       - blog
     paths:
