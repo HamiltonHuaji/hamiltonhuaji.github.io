@@ -44,4 +44,6 @@ jobs:
       - name: Deploy
         run: |
           git submodule sync --recursive
+          git submodule init
+          git submodule update
           npx hexo clean && npx hexo g -d
