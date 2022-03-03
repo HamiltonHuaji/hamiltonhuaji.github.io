@@ -17,7 +17,7 @@ jobs:
       - name: Checkout source repo
         uses: actions/checkout@v2
         with:
-          ref: blog_factory
+          ref: blog
 
       - name: Set up Node.js
         uses: actions/setup-node@v1
