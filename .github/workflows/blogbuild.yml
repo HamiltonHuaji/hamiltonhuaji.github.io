@@ -1,0 +1,46 @@
+name: Hexo Deploy
+on:
+  push:
+    branches:
+      - blog
+    paths:
+      - source/**
+
+env:
+  GIT_USER: HamiltonHuaji
+  GIT_EMAIL: zhangyuhao415@gmail.com
+
+jobs:
+  build-blog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repo
+        uses: actions/checkout@v2
+        with:
+          ref: blog_factory
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '14'
+
+            # 安装依赖
+      - name: Install Dependencies
+        run: |
+          npm install
+          # 从之前设置的 secret 获取部署私钥
+      - name: Setup SSH Keys and known_hosts
+        env:
+          DEPLOY_SECRET: ${{ secrets.BLOG_DEPLOY_SECRET }}
+        run: |
+          sudo timedatectl set-timezone "Asia/Shanghai"
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_SECRET" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          git config --global user.name $GIT_USER
+          git config --global user.email $GIT_EMAIL
+          # 生成并部署 `npx hexo clean && npx hexo g -d` or `npm run deploy`
+      - name: Deploy
+        run: |
+          npx hexo clean && npx hexo g -d
