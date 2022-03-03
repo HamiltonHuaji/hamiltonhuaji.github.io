@@ -43,4 +43,5 @@ jobs:
           # 生成并部署 `npx hexo clean && npx hexo g -d` or `npm run deploy`
       - name: Deploy
         run: |
+          git submodule sync --recursive
           npx hexo clean && npx hexo g -d
