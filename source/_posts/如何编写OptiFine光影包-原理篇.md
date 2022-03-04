@@ -182,7 +182,7 @@ void main() {
     EndPrimitive();
 }
 ```
-`layout(triangles) in;` 表示这一几何着色器接受三角形作为输入. `layout(triangle_strip, max_vertices=6) out;` 表示这一几何着色器输出三角形, 最多产生 6 个顶点. 与片元着色器相比, 该几何着色器接受的输入变量改为数组, 以顶点之序号为索引访问这些数组即可分别获取顶点着色器之输出. 每当调用 `EmitVertex();` 时, OpenGL 就会将当前标记为 `out` 的变量值以及 `gl_Position` 这类 OpenGL 内部变量打包为一个新的顶点. 当调用 `EndPrimitive();` 时, OpenGL 就会将此前打包的顶点组合成一个新的图元, 然后像普通的图元一样, 光栅化后交给片元着色器执行. 以上几何着色器的功能是在与原三角形相对屏幕的中心对称处多绘制一个旋转了 `$\pi\text{rad}$` 的三角形.
+`layout(triangles) in;` 表示这一几何着色器接受三角形作为输入. `layout(triangle_strip, max_vertices=6) out;` 表示这一几何着色器输出三角形, 最多产生 6 个顶点. 与片元着色器相比, 该几何着色器接受的输入变量改为数组, 以顶点之序号为索引访问这些数组即可分别获取顶点着色器之输出. 每当调用 `EmitVertex();` 时, OpenGL 就会将当前标记为 `out` 的变量值以及 `gl_Position` 这类 OpenGL 内部变量打包为一个新的顶点. 当调用 `EndPrimitive();` 时, OpenGL 就会将此前打包的顶点组合成一个新的图元, 然后像普通的图元一样, 光栅化后交给片元着色器执行. 以上几何着色器的功能是在与原三角形相对屏幕的中心对称处多绘制一个旋转了 `$\pi\ \text{rad}$` 的三角形.
 
 当几何着色器带有 `layout(points, max_vertices=1) out;` 声明时, 它就输出单个点作为图元. 这正是我们想要的[^7]. 通过在几何着色器中指定 `gl_Position = foo(blockCentralPosition);`, 即可在根据映射函数 `foo` 与 `blockCentralPosition` 相关的位置输出像素值. 映射函数 `foo` 有很多选择, 只要是一一的映射都是可以接受的[^8], 例如我的选择是
 ```glsl
@@ -205,10 +205,10 @@ ivec2 getTexelPosFromVoxelPos(ivec3 voxelPos) {
 
 [^1]: 本文中对各 pass 的命名与 OptiFine 原文档略有不同, 是根据执行的着色器的文件名命名的.
 [^2]: 即史蒂夫的眼睛.
-[^3]: shadow pass 后实际上有两组类似于后文中 deferred pass 的着色器可以执行, 分别称作 shadow composite (执行 shadowcomp*.*sh )和 prepare (执行 prepare*.*sh ), 用得较少.
+[^3]: shadow pass 后实际上有两组类似于后文中 deferred pass 的着色器可以执行, 分别称作 shadow composite (执行 `shadowcomp*.*sh` )和 prepare (执行 `prepare*.*sh` ), 用得较少.
 [^4]: 什么? 你问我 shadow pass 里也没有处理到的方块怎么办? 反正这样的方块离得够远, 影响不大, 就不用管了...
 [^5]: 读写 G-buffer 时的显存带宽占用是延迟渲染典型的性能瓶颈. 很难相信读取带有类似 G-buffer 性质的我们的变种 shadow map 时显存带宽占用反而不重要了.
-[^6]: 像素的深度值也是可以利用的, 即通过指定 gl_Position.z 的值, 这同样是一个 32 位的浮点数.
+[^6]: 像素的深度值也是可以利用的, 即通过指定 `gl_Position.z` 的值, 这同样是一个 32 位的浮点数.
 [^7]: 一个方块实际上有 2×6=12 个三角形, 因此朴素的写法会往 shadow map 上同一个位置写 12 次相同的值. 这可以通过在几何着色器上不发射重复写入的图元来实现优化.
 [^8]: 很显然, 尝试利用 GPU 缓存的特性进行访存的局部性优化是好的想法; 或者尝试在 shadow map 上建一颗[八叉树](https://github.com/BruceKnowsHow/Octray.git)也不错.
 
