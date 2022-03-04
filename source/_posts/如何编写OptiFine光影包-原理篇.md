@@ -23,11 +23,15 @@ tags:
 
 ## OptiFine的工作方式
 
+[OptiFine](https://www.optifine.net/)是一款较主流的minecraft图形优(魔)化(改)闭源mod. 一般所说的光影包实际上是包含了一些着色器源码和附带的美术资源的压缩包, 通过OptiFine替换minecraft原有的着色器而运行. 值得一提的是, OptiFine有一个正在开发中的开源替代[Iris](https://github.com/IrisShaders/Iris.git).
+
 此处我们不讨论OptiFine是如何对minecraft进行逻辑注入的, 而着眼于它组织各着色器、并提供给着色器必要的输入的方式.
 
-以下为一个典型的OptiFine光影包的目录结构
+以下为一个典型的OptiFine光影包的目录结构. 为了简明起见, 这一目录结构略去下界/末地等维度使用的着色器. 在下文
 ```text
 // TODO
 ```
+
+OptiFine将首先执行shadow pass. 顾名思义, 这一步是为了生成阴影映射(shadow map), 为阴影的绘制提供便利. 这一pass由`shader/shadow.*sh`构成
 
 // To be continued...
