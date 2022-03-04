@@ -33,7 +33,8 @@ skip_render:
 markdown:
   render:
     typographer: false
-
+kramed:
+  smartypants: false
 # Writing
 new_post_name: :title.md # File name of new posts
 default_layout: post
