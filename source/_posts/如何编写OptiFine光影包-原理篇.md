@@ -13,7 +13,7 @@ tags:
 
 1986年, Kajiya等人提出了渲染方程, 描述几何光学近似下光与物体表面的交互过程(各符号的解释见[渲染方程](https://zh.wikipedia.org/zh-hans/渲染方程))
 
-`$L_{\text{out}}(\vec{x}, \vec{\omega}) = \int_{\text{Hemisphere}} f_r(\vec{x}, \vec{\omega'}, \vec{\omega}) L_{\text{in}}(\vec{x}, \vec{\omega'}) (\omega' \dot \vec{n}) d\vec{\omega'}$`
+`$L_{\text{out}}(\vec{x}, \vec{\omega}) = \int_{\text{Hemisphere}} f_r(\vec{x}, \vec{\omega'}, \vec{\omega}) L_{\text{in}}(\vec{x}, \vec{\omega'}) (\omega' \cdot \vec{n}) d\vec{\omega'}$`
 
 作为一个积分方程, 该方程一般不具有封闭形式的解, 因此需要通过蒙特卡洛方法, 求得一个随机变量`$L(\vec{\text{eye}}, \vec{\text{vision}})$`, 使其期望为方程的解或近似解.
 
@@ -24,5 +24,10 @@ tags:
 ## OptiFine的工作方式
 
 此处我们不讨论OptiFine是如何对minecraft进行逻辑注入的, 而着眼于它组织各着色器、并提供给着色器必要的输入的方式.
+
+以下为一个典型的OptiFine光影包的目录结构
+```text
+// TODO
+```
 
 // To be continued...
