@@ -212,4 +212,5 @@ ivec2 getTexelPosFromVoxelPos(ivec3 voxelPos) {
 [^7]: 一个方块实际上有 2×6=12 个三角形, 因此朴素的写法会往 shadow map 上同一个位置写 12 次相同的值. 这可以通过在几何着色器上不发射重复写入的图元来实现优化.
 [^8]: 很显然, 尝试利用 GPU 缓存的特性进行访存的局部性优化是好的想法; 或者尝试在 shadow map 上建一颗[八叉树](https://github.com/BruceKnowsHow/Octray.git)也不错.
 
-// To be revisioned...
+// To be revised.
+// Please copy or redistribute this article later, so as not to make your reprint contain wrong content.
