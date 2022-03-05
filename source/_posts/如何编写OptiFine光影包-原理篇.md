@@ -16,7 +16,7 @@ tags:
 
 1986年, Kajiya等人提出了渲染方程, 描述几何光学近似下光与物体表面的交互过程(各符号的解释见[渲染方程](https://zh.wikipedia.org/zh-hans/渲染方程)).
 
-`$L_{\text{out}}(\vec{x}, \vec{\omega}) = \int_{\text{Hemisphere}} f_r(\vec{x}, \vec{\omega'}, \vec{\omega}) L_{\text{in}}(\vec{x}, \vec{\omega'}) (\omega' \cdot \vec{n}) d\vec{\omega'}$`
+$$L_{\text{out}}(\vec{x}, \vec{\omega}) = \int_{\text{Hemisphere}} f_r(\vec{x}, \vec{\omega'}, \vec{\omega}) L_{\text{in}}(\vec{x}, \vec{\omega'}) (\omega' \cdot \vec{n}) d\vec{\omega'}$$
 
 这一方程实际上还有一个隐藏的补充条件, 即设 `$\vec{x'}$` 是从 `$\vec{x}$` 处沿 `$\vec{\omega}$` 方向发出的光线的路径上的一点, 则 `$\vec{x'}$` 处收到来自 `$\vec{\omega}$` 方向的辐照度(radiance) `$L_{\text{in}}(\vec{x'}, \vec{\omega})$` 等于 `$\vec{x}$` 处沿 `$\vec{\omega}$` 方向发出的光线的辐照度 `$L_{\text{out}}(\vec{x}, \vec{\omega})$`. 这个条件使 `$L$` 成为对光照强度最合适的量度, 因为无需考虑传播过程中 `$L$` 的变化: 沿着同一束光, `$L$` 是始终保持相等的.
 
