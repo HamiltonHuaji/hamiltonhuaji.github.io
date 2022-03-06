@@ -16,7 +16,7 @@ tags:
 
 然而, 作为一门极其类似 C 语言的语言, glsl 本身便向我们揭示了借用 C 与 C++ 生态的一种可能. glm 这个库便是极好的一个开始. 除了 glsl 的 swizzling 这一特性之外, 它能模拟 glsl 中几乎所有的数学函数的特性. 我们只需要在 glm 的基础上更进一步, 将 swizzling 这类特性和 sampler2D 这类 glsl 的内置类型也模拟出来, 便能将 glsl 代码伪装成 C++ 代码, 送给 C++ 的 linter 等工具检查, 或使用 clang-format 格式化代码. 当然, 最终还是需要利用 Khronos Group 的 glslangValidator 完成正式的代码检查.
 
-模拟前述特性并不需要完成其实现, 而只需要有一个头文件向相关工具描述各对象的类型. 笔者完成的头文件可见[GLSL.hpp](https://github.com/HamiltonHuaji/GLSL.hpp), 将其像包含正常头文件一样包含进 glsl 代码中, 并修改当前语言模式为 C++ 即可.
+模拟前述特性并不需要完成其实现, 而只需要有一个头文件向相关工具描述各对象的类型. 笔者完成的头文件可见[GLSL.hpp](https://github.com/HamiltonHuaji/GLSL.hpp/blob/master/glsl.hpp), 将其像包含正常头文件一样包含进 glsl 代码中, 并修改编辑器语言模式为 C++ 即可.
 
 ## Gamma 校正
 
