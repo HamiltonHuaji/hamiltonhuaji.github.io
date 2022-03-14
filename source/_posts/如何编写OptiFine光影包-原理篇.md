@@ -201,7 +201,7 @@ ivec2 getTexelPosFromVoxelPos(ivec3 voxelPos) {
 
 在完成了以上的变种 shader pass 后, 即可在 deferred pass 等地方利用同样的映射函数 `foo` 访问 `shadowcolor*` 和 `shadowtex*`, 查询指定的空间位置是否有方块, 以及有方块时方块的种类等数据, 这是第一节伪代码中 `intersect(r)` 函数得以实现的基础. 余下的部分就是平平无奇(不)的蒙特卡洛光线追踪. 目前主流光线追踪光影包使用的求交算法多为[A Fast Voxel Traversal Algorithm for Ray Tracing](http://www.cse.yorku.ca/~amana/research/grid.pdf).
 
-任何一个可用的光影包绝不只是仅仅完成光线追踪部分. 根据笔者的经验, 每帧 1~4 spp(sample per pixel) 的蒙特卡洛光线追踪样本数是一个较为现实的性能目标(即每个像素使用至多 4 个样本估计其颜色), 而这样少的样本数造成的视觉观感(噪点和闪烁)是完全不可接受的. 哪里还有更多的样本呢? 答案是时间和空间上的邻域.
+任何一个可用的光线追踪光影包绝不只是仅仅完成光线追踪部分. 根据笔者的经验, 每帧 1~4 spp(sample per pixel) 的蒙特卡洛光线追踪样本数是一个较为现实的性能目标(即每个像素使用至多 4 个样本估计其颜色), 而这样少的样本数造成的视觉观感(噪点和闪烁)是完全不可接受的. 哪里还有更多的样本呢? 答案是时间和空间上的邻域.
 
 ![未经降噪的图像示例](unfiltered.png)
 
@@ -211,7 +211,7 @@ ivec2 getTexelPosFromVoxelPos(ivec3 voxelPos) {
 
 很显然, 综合使用时空邻域信息是个好主意. 2017 年一篇较受关注的文章[Spatiotemporal Variance-Guided Filtering: Real-Time Reconstruction for Path-Traced Global Illumination](https://cg.ivd.kit.edu/publications/2017/svgf/svgf_preprint.pdf)就是此类方法中的佼佼者. 它能将 1 spp 的采样结果提升到接近 2048 spp 的效果, 极大地减少了对光线追踪性能的要求. (据说 minecraft 基岩版的光追使用了 A-SVGF 的修改实现, 而 A-SVGF 正是 SVGF 的一个改进)
 
-![SVGF示例. 左下是 1 spp 的算法输入, 中间是算法输出结果, 右上是 2048 spp 的参考图像]
+![SVGF示例. 左下是 1 spp 的算法输入, 中间是算法输出结果, 右上是 2048 spp 的参考图像](svgf.png)
 
 [^1]: 本文中对各 pass 的命名与 OptiFine 原文档略有不同, 是根据执行的着色器的文件名命名的.
 [^2]: 即史蒂夫的眼睛.
