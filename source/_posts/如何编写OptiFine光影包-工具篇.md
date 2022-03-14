@@ -10,13 +10,15 @@ tags:
 工欲善其事, 必先利其器. 私以为比起光影包的核心算法本身, 辅助性的代码以及工具代码是远为重要的. 好的工具集能帮助你快速定位 bug, 这在抓帧工具难以使用的情况下[^1]是极其重要的. 本文主要介绍笔者在开发过程中产出的工具代码.
 
 <!-- more -->
-## 代码提示与验证
+## 代码提示、预处理与验证
 
 一门编程语言能否让人用得顺手不仅仅看这门语言本身设计是否优秀, 还要看与这门语言配套的编辑环境是否强大易用. 很不幸, glsl 并不是这样一门语言. 例如, VS Code 上似乎并不存在一个足够强大的 glsl linting 扩展, 来支撑我们的代码提示/语法检查/风格检查等需求. 配合上 glsl 本身的运行环境, 从书写代码到报错并修正错误的反馈回路将无比冗长.
 
 然而, 作为一门极其类似 C 语言的语言, glsl 本身便向我们揭示了借用 C 与 C++ 生态的一种可能. glm 这个库便是极好的一个开始. 除了 glsl 的 swizzling 这一特性之外, 它能模拟 glsl 中几乎所有的数学函数的特性. 我们只需要在 glm 的基础上更进一步, 将 swizzling 这类特性和 sampler2D 这类 glsl 的内置类型也模拟出来, 便能将 glsl 代码伪装成 C++ 代码, 送给 C++ 的 linter 等工具检查, 或使用 clang-format 格式化代码. 当然, 最终还是需要利用 Khronos Group 的 glslangValidator 完成正式的代码检查.
 
 模拟前述特性并不需要完成其实现, 而只需要有一个头文件向相关工具描述各对象的类型. 笔者完成的头文件可见[GLSL.hpp](https://github.com/HamiltonHuaji/GLSL.hpp/blob/master/glsl.hpp), 将其像包含正常头文件一样包含进 glsl 代码中, 并修改编辑器语言模式为 C++ 即可.
+
+然而, OptiFine 有一个特性是 `#include` 指令, 即允许着色器文件包含来自其它文件的代码. 这一特性是组织起有序的工程所必须的. 然而 glslangValidator 并不能方便地检查带有该指令的代码(它要求源码中添加 `#extension GL_ARB_shading_language_include : require` 语句, 而我们并不希望 OptiFine 看到这一行). 一个并不复杂的方法是自己写一个预处理器, 完成对文件包含的处理. 笔者的预处理器见 [build.py](https://gist.github.com/HamiltonHuaji/9cfcf2c223cde1d5f00d0d85e71bb9cc). 考虑到 OptiFine 有一些配置是通过在着色器源码中插入特定格式的注释来实现的(指定 MRT 的 render targets 时需在文件中写 `/* DRAWBUFFERS: XYZ */` 这样的注释), 而这种格式的要求较严格(对于空格和缩进不鲁棒), 且在其书写出错时没有报错提示, 这一预处理器还能将形如 `#pragma drawbuffers(XYZ)` 的表达式转换成前述形式, 以避免偶然写出错误的注释格式.
 
 ## Gamma 校正
 

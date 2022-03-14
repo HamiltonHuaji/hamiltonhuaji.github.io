@@ -205,11 +205,11 @@ ivec2 getTexelPosFromVoxelPos(ivec3 voxelPos) {
 
 ![未经降噪的图像示例](unfiltered.png)
 
-[Amortized Super Sampling](https://hhoppe.com/supersample.pdf)是时域超采样技术的开山之作.时域反走样/时域超采样技术的基本思想是, 如果某个像素对应的物体表面在前一帧也出现在画面上, 那么前一帧的像素颜色值就也能作为物体颜色的样本, 增加了估计像素颜色的有效样本数. 通过这一技术, 可以使每个像素的有效样本数提高数倍(通过使用来自更长历史的信息).
+[Amortized Super Sampling](https://hhoppe.com/supersample.pdf) 是时域超采样技术的开山之作.时域反走样(TAA)/时域超采样技术的基本思想是, 如果某个像素对应的物体表面在前一帧也出现在画面上, 那么前一帧的像素颜色值就也能作为物体颜色的样本, 增加了估计像素颜色的有效样本数. 通过这一技术, 可以使每个像素的有效样本数提高数倍(通过使用来自更长历史的信息).
 
-利用空间邻域降噪的技术对于读者来说可能更为熟悉, 典型的有各类空域滤波器, 如[Edge-Avoiding À-Trous Wavelet Transform for fast Global Illumination Filtering](https://jo.dreggn.org/home/2010_atrous.pdf)等. 相邻像素的颜色值(或照度)往往有不错的相关性, 因此选取合适的权重将邻近的像素加权平均, 即可在保持图像上各种边缘清晰的情况下减少噪点.
+利用空间邻域降噪的技术对于读者来说可能更为熟悉, 典型的有各类空域滤波器, 如 [Edge-Avoiding À-Trous Wavelet Transform for fast Global Illumination Filtering](https://jo.dreggn.org/home/2010_atrous.pdf) 等. 相邻像素的颜色值(或照度)往往有不错的相关性, 因此选取合适的权重将邻近的像素加权平均, 即可在保持图像上各种边缘清晰的情况下减少噪点.
 
-很显然, 综合使用时空邻域信息是个好主意. 2017 年一篇较受关注的文章[Spatiotemporal Variance-Guided Filtering: Real-Time Reconstruction for Path-Traced Global Illumination](https://cg.ivd.kit.edu/publications/2017/svgf/svgf_preprint.pdf)就是此类方法中的佼佼者. 它能将 1 spp 的采样结果提升到接近 2048 spp 的效果, 极大地减少了对光线追踪性能的要求. (据说 minecraft 基岩版的光追使用了 A-SVGF 的修改实现, 而 A-SVGF 正是 SVGF 的一个改进)
+很显然, 综合使用时空邻域信息是个好主意. 2017 年一篇较受关注的文章 [Spatiotemporal Variance-Guided Filtering: Real-Time Reconstruction for Path-Traced Global Illumination](https://cg.ivd.kit.edu/publications/2017/svgf/svgf_preprint.pdf) 就是此类方法中的佼佼者. 它能将 1 spp 的采样结果提升到接近 2048 spp 的效果, 极大地减少了对光线追踪性能的要求. (minecraft 基岩版的光追降噪使用的正是 SVGF)
 
 ![SVGF示例. 左下是 1 spp 的算法输入, 中间是算法输出结果, 右上是 2048 spp 的参考图像](svgf.png)
 
