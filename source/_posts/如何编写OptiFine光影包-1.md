@@ -1,5 +1,5 @@
 ---
-title: 如何编写OptiFine光影包-(1)
+title: 如何编写OptiFine光影包(1)
 date: 2022-03-14 16:32:47
 mathjax: true
 tags:
