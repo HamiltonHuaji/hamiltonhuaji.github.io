@@ -119,7 +119,7 @@ uniform sampler2D colortex15;
 
 OptiFine 可以经过配置而将一部分着色器的输出指向特定纹理.
 
-OptiFine[^1] 将首先执行 shadow pass. 顾名思义, 这一步是为了生成阴影映射(shadow map), 为阴影的绘制提供便利. 这一 pass 执行的着色器是 `shadow.*sh`. OptiFine 将以太阳/月亮为视点, 视线指向当前摄像机[^2], 生成 MVP 矩阵. 为了保证不在屏幕可见范围内的物体也能投下阴影, 世界坐标内以摄像机为中心较大范围内的顶点均会被送入这一 pass 进行绘制. OptiFine 会首先绘制所有的不透明物体, 得到 `shadowcolor1` 和相应的深度缓冲 `shadowtex1`; 随后再叠加绘制水面等透明物, 得到 `shadowcolor0` 和 `shadowtex0`. 由于 `shadowtex*` 来自单通道的深度缓冲, 可以仅访问其 r 分量. `shadowcolor0/1` 的区别在需要获得半透明物体的阴影时是有意义的.[^3]
+OptiFine[^1] 将首先执行 shadow pass. 顾名思义, 这一步是为了生成阴影映射(shadow map), 为阴影的绘制提供便利. 这一 pass 执行的着色器是 `shadow.*sh`. OptiFine 将以太阳/月亮为视点, 视线指向当前摄像机[^2], 生成 MVP 矩阵. 为了保证不在屏幕可见范围内的物体也能投下阴影, 世界坐标内以摄像机为中心较大范围内的顶点均会被送入这一 pass 进行绘制. OptiFine 会首先绘制所有的不透明物体, 得到 `shadowcolor1` 和相应的深度缓冲 `shadowtex1`; 随后再叠加绘制水面等透明物, 得到 `shadowcolor0` 和 `shadowtex0`[^9]. 由于 `shadowtex*` 来自单通道的深度缓冲, 可以仅访问其 r 分量. `shadowcolor0/1` 的区别在需要获得半透明物体的阴影时是有意义的.[^3]
 
 OptiFine 将随后执行第一个 gbuffer pass . 这一步的目的是生成延迟渲染所用到的 `G-buffer`. G-buffer 并不是一块特殊格式的缓冲区, 而是保存场景信息的颜色缓冲区的统称. 通过自行定义 G-buffer 数据的存储方式, 可以将感兴趣的场景信息, 如当前处理的片元的法线方向/世界坐标等, 编码到颜色值上, 写入如 `colortex*` 的颜色缓冲内, 并在完成遮挡剔除后, 传递给随后的着色器使用; 此后的着色器就只需处理屏幕上可见的物体表面, 从而大量地节约昂贵的颜色计算. 这就是延迟渲染方法的主要思想. 除了用于绘制水面/玻璃等半透明面的 `gbuffers_water.*sh` 以外的所有 `gbuffers_*.*sh` 是这一 pass 执行的着色器.
 
@@ -221,6 +221,7 @@ ivec2 getTexelPosFromVoxelPos(ivec3 voxelPos) {
 [^6]: 像素的深度值也是可以利用的, 即通过指定 `gl_Position.z` 的值, 这同样是一个 32 位的浮点数.
 [^7]: 一个方块实际上有 2×6=12 个三角形, 因此朴素的写法会往 shadow map 上同一个位置写 12 次相同的值. 这可以通过在几何着色器上不发射重复写入的图元来实现优化.
 [^8]: 很显然, 尝试利用 GPU 缓存的特性进行访存的局部性优化是好的想法; 或者尝试在 shadow map 上建一颗[八叉树](https://github.com/BruceKnowsHow/Octray.git)也不错.
+[^9]: 然而, SEUS PTGI 12 的代码中仿佛是将 `shadowcolor*` 作为 shadow pass 的 MRT, 即同时向这两张缓存中写入颜色值.
 
 // To be revised.
 // Please copy or redistribute this article later, so as not to make your reprint contain wrong content.
