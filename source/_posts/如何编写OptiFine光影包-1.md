@@ -94,6 +94,7 @@ G-buffer 的定义见 `src/inc/gbuffer.hpp`, 其打包的数据有:
 + `float smoothness`, 光滑度
 + `float metalness`, 金属度
 + `int blockID`, 16 bits 的方块 ID, 低 5 位表示方块形状, 第 6 位表示是否发光, 第 7 位表示是否透明, 高 8 位编码方块的各种数据值
+
 最终 G-buffer 将被打包进 RGBA32F 格式(即有 RGBA 共 4 个通道, 每个通道都是 32 bits 的 float)的 `colortex0`.
 
 世界坐标将被写入同样是 RGBA32F 的 `colortex1`, 浪费了一个 w 分量, 日后不够用了再来优化.
