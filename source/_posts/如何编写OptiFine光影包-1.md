@@ -70,10 +70,10 @@ tags:
 
 对于③, 在教程的本阶段, 简单地丢弃它们的像素即可:
 {% spoiler HowToOptiFine/blob/a2208932f54e50cb434cf52aa9467312b2f7f054/src/core/gbuffers/gbuffers_discard.vert %}
-{% ghcode https://github.com/HamiltonHuaji/HowToOptiFine/blob/a2208932f54e50cb434cf52aa9467312b2f7f054/src/core/gbuffers/gbuffers_discard.vert %}
+{% ghcode https://github.com/HamiltonHuaji/HowToOptiFine/blob/a2208932f54e50cb434cf52aa9467312b2f7f054/src/core/gbuffers/gbuffers_discard.vert {cap:false,lang:cpp} %}
 {% endspoiler %}
 {% spoiler HowToOptiFine/blob/a2208932f54e50cb434cf52aa9467312b2f7f054/src/core/gbuffers/gbuffers_discard.frag %}
-{% ghcode https://github.com/HamiltonHuaji/HowToOptiFine/blob/a2208932f54e50cb434cf52aa9467312b2f7f054/src/core/gbuffers/gbuffers_discard.frag %}
+{% ghcode https://github.com/HamiltonHuaji/HowToOptiFine/blob/a2208932f54e50cb434cf52aa9467312b2f7f054/src/core/gbuffers/gbuffers_discard.frag {cap:false,lang:cpp} %}
 {% endspoiler %}
 透明物体(如水面, 玻璃)的处理较为复杂, 和实体一起暂时归到这一类中.
 
@@ -81,13 +81,16 @@ tags:
 
 对于②, 我们需要绘制一张 G-buffer, 并在 composite 阶段完成着色:
 {% spoiler HowToOptiFine/blob/a2208932f54e50cb434cf52aa9467312b2f7f054/src/core/gbuffers/gbuffers_main.vert %}
-{% ghcode https://github.com/HamiltonHuaji/HowToOptiFine/blob/a2208932f54e50cb434cf52aa9467312b2f7f054/src/core/gbuffers/gbuffers_main.vert %}
+{% ghcode https://github.com/HamiltonHuaji/HowToOptiFine/blob/a2208932f54e50cb434cf52aa9467312b2f7f054/src/core/gbuffers/gbuffers_main.vert {cap:false,lang:cpp} %}
 {% endspoiler %}
 {% spoiler HowToOptiFine/blob/a2208932f54e50cb434cf52aa9467312b2f7f054/src/core/gbuffers/gbuffers_main.frag %}
-{% ghcode https://github.com/HamiltonHuaji/HowToOptiFine/blob/a2208932f54e50cb434cf52aa9467312b2f7f054/src/core/gbuffers/gbuffers_main.frag %}
+{% ghcode https://github.com/HamiltonHuaji/HowToOptiFine/blob/a2208932f54e50cb434cf52aa9467312b2f7f054/src/core/gbuffers/gbuffers_main.frag {cap:false,lang:cpp} %}
 {% endspoiler %}
 
-G-buffer 的定义见 `src/inc/gbuffer.hpp`, 其打包的数据有:
+G-buffer 的定义如下
+{% ghcode https://github.com/HamiltonHuaji/HowToOptiFine/blob/a2208932f54e50cb434cf52aa9467312b2f7f054/src/inc/gbuffer.hpp 10 29 {cap:false,lang:cpp} %}
+
+其打包的数据有:
 + `vec3 diffuse`, 为漫反射颜色
 + `vec3 normal`, 世界坐标下的法线
 + `vec3 tangent`, 世界坐标下的切线
@@ -103,7 +106,7 @@ G-buffer 的定义见 `src/inc/gbuffer.hpp`, 其打包的数据有:
 
 我们计划在 `composite.fsh` 中完成蒙特卡洛光线追踪, 而目前只是将 G-buffer 的 diffuse 部分加上噪声填到 `colortex6` 中, 以使 TAA 的调试能进行.
 {% spoiler HowToOptiFine/blob/a2208932f54e50cb434cf52aa9467312b2f7f054/src/composite.fsh %}
-{% ghcode https://github.com/HamiltonHuaji/HowToOptiFine/blob/a2208932f54e50cb434cf52aa9467312b2f7f054/src/composite.fsh %}
+{% ghcode https://github.com/HamiltonHuaji/HowToOptiFine/blob/a2208932f54e50cb434cf52aa9467312b2f7f054/src/composite.fsh {cap:false,lang:cpp} %}
 {% endspoiler %}
 
 // To be continued...

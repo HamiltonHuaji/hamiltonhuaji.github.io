@@ -102,7 +102,7 @@ scheme: Mist
 #scheme: Gemini
 
 # Dark Mode
-darkmode: false
+darkmode: true
 
 
 # ---------------------------------------------------------------
@@ -201,6 +201,7 @@ links_settings:
 
 links:
   Andy Lee: https://blog.lockon.ml/
+  Galaxy Mimi: https://zhangshuqiao.org/
   #Title: http://yoursite.com
 
 # Table of Contents in the Sidebar
