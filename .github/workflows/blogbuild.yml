@@ -46,6 +46,5 @@ jobs:
           git submodule sync --recursive
           git submodule init
           git submodule update
-          cp ./_next_config.yml ./themes/next/_config.yml
-          cp ./zh-CN.yml ./themes/next/languages/zh-CN.yml
+          cp ./zh-CN.yml ./node_modules/hexo-theme-next/languages/zh-CN.yml
           npx hexo clean && npx hexo g -d
