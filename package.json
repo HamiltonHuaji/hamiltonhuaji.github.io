@@ -12,6 +12,7 @@
     "version": "6.1.0"
   },
   "dependencies": {
+    "axios": "^0.26.1",
     "hexo": "^6.1.0",
     "hexo-deployer-git": "^3.0.0",
     "hexo-generator-archive": "^1.0.0",
@@ -24,9 +25,10 @@
     "hexo-renderer-kramed": "^0.1.4",
     "hexo-renderer-stylus": "^2.0.0",
     "hexo-server": "^3.0.0",
-    "hexo-sliding-spoiler": "github:HamiltonHuaji/hexo-sliding-spoiler#5a0136dc1e3d16cd692687ecaa4e8a178b10f040",
-    "hexo-tag-github-code": "^0.1.0",
+    "hexo-sliding-spoiler": "github:HamiltonHuaji/hexo-sliding-spoiler#eeef1e06261060987b01206fca21665e7516e3eb",
+    "hexo-tag-github-code": "github:HamiltonHuaji/hexo-tag-github-code#12b181ab145030f90cc6e2e1e020c4f2b006d193",
     "hexo-theme-landscape": "^0.0.3",
-    "request": "^2.88.2"
+    "request": "^2.88.2",
+    "tunnel": "0.0.6"
   }
 }
