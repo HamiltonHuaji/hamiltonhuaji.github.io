@@ -182,7 +182,7 @@ void main() {
     EndPrimitive();
 }
 ```
-`layout(triangles) in;` 表示这一几何着色器接受三角形作为输入. `layout(triangle_strip, max_vertices=6) out;` 表示这一几何着色器输出三角形, 最多产生 6 个顶点. 与片元着色器相比, 该几何着色器接受的输入变量改为数组, 以顶点之序号为索引访问这些数组即可分别获取顶点着色器之输出. 每当调用 `EmitVertex();` 时, OpenGL 就会将当前标记为 `out` 的变量值以及 `gl_Position` 这类 OpenGL 内部变量打包为一个新的顶点. 当调用 `EndPrimitive();` 时, OpenGL 就会将此前打包的顶点组合成一个新的图元, 然后像普通的图元一样, 光栅化后交给片元着色器执行. 以上几何着色器的功能是在与原三角形相对屏幕的中心对称处多绘制一个旋转了 `$\pi\ \text{rad}$` 的三角形.
+`layout(triangles) in;` 表示这一几何着色器接受三角形作为输入. `layout(triangle_strip, max_vertices=6) out;` 表示这一几何着色器输出三角形, 最多产生 6 个顶点. 与片元着色器相比, 该几何着色器接受的输入变量改为数组, 以顶点之序号为索引访问这些数组即可分别获取顶点着色器之输出. 每当调用 `EmitVertex();` 时, OpenGL 就会将当前声明为 `out` 的变量值以及 `gl_Position` 这类 OpenGL 内部变量打包为一个新的顶点. 当调用 `EndPrimitive();` 时, OpenGL 就会将此前打包的顶点组合成一个新的图元, 然后像普通的图元一样, 光栅化后交给片元着色器执行. 以上几何着色器的功能是在与原三角形相对屏幕的中心对称处多绘制一个旋转了 `$\pi\ \text{rad}$` 的三角形.
 
 当几何着色器带有 `layout(points, max_vertices=1) out;` 声明时, 它就输出单个点作为图元. 这正是我们想要的[^7]. 通过在几何着色器中指定 `gl_Position = foo(blockCentralPosition);`, 即可在根据映射函数 `foo` 与 `blockCentralPosition` 相关的位置输出像素值. 映射函数 `foo` 有很多选择, 只要是一一的映射都是可以接受的[^8], 例如我的选择是
 ```glsl
@@ -200,6 +200,8 @@ ivec2 getTexelPosFromVoxelPos(ivec3 voxelPos) {
 *注: SEUS PTGI 的几何着色器使用方式略有不同, 因为它还同时生成了正常的 shadow map. 它的几何着色器会生成两个三角形, 第一个三角形的三个顶点在裁切坐标系中的同一位置, 也就是一个零尺寸的三角形, 最后也会只画一个像素点; 第二个三角形就是正常的三角形, 但进行了缩放和偏移, 使正常的那张 shadow map 只占用整个纹理的一部分*
 
 在完成了以上的变种 shader pass 后, 即可在 deferred pass 等地方利用同样的映射函数 `foo` 访问 `shadowcolor*` 和 `shadowtex*`, 查询指定的空间位置是否有方块, 以及有方块时方块的种类等数据, 这是第一节伪代码中 `intersect(r)` 函数得以实现的基础. 余下的部分就是平平无奇(不)的蒙特卡洛光线追踪. 目前主流光线追踪光影包使用的求交算法多为[A Fast Voxel Traversal Algorithm for Ray Tracing](http://www.cse.yorku.ca/~amana/research/grid.pdf).
+
+然而, 关于光线求交还有一个细节值得注意, 即 SEUS PTGI 等光影包能正确地对栅栏等非方块形状的物体求交. 更为复杂的是, 栅栏等方块是有内部状态的, 决定了栅栏是否与其它方块连接而有横梁. 这实际上是利用 OptiFine 支持根据方块属性为方块 ID(可以通过顶点着色器声明的 `attribute vec3 mc_Entity;` 的 x 分量访问)赋值的特性来实现的. 例如, 可以通过在 `shaders/block.properties` 文件中书写 `block.514=minecraft:oak_fence:north=true:south=true`, 来将同时在南北方向有横梁的橡木栅栏的方块 ID 设为 514. 在通过方块 ID 确定方块属性后, 就需要做一些 dirty work 了, 即把形状特殊的物体的形状硬编码进着色器进行求交.
 
 任何一个可用的光线追踪光影包绝不只是仅仅完成光线追踪部分. 根据笔者的经验, 每帧 1~4 spp(sample per pixel) 的蒙特卡洛光线追踪样本数是一个较为现实的性能目标(即每个像素使用至多 4 个样本估计其颜色), 而这样少的样本数造成的视觉观感(噪点和闪烁)是完全不可接受的. 哪里还有更多的样本呢? 答案是时间和空间上的邻域.
 

@@ -105,7 +105,9 @@ theme: next
 image_caption:
   enable: true
   # class_name: #if you wanna customize the style for the caption,you can assign a class name, default is 'image-caption'
-
+github_code:
+  cap: true
+  re: false
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
 deploy:

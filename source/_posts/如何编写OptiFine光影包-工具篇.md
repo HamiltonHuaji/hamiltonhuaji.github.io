@@ -18,7 +18,9 @@ tags:
 
 模拟前述特性并不需要完成其实现, 而只需要有一个头文件向相关工具描述各对象的类型. 笔者完成的头文件可见[GLSL.hpp](https://github.com/HamiltonHuaji/GLSL.hpp/blob/master/glsl.hpp), 将其像包含正常头文件一样包含进 glsl 代码中, 并修改编辑器语言模式为 C++ 即可.
 
-然而, OptiFine 有一个特性是 `#include` 指令, 即允许着色器文件包含来自其它文件的代码. 这一特性是组织起有序的工程所必须的. 然而 glslangValidator 并不能方便地检查带有该指令的代码(它要求源码中添加 `#extension GL_ARB_shading_language_include : require` 语句, 而我们并不希望 OptiFine 看到这一行). 一个并不复杂的方法是自己写一个预处理器, 完成对文件包含的处理. 笔者的预处理器见 [build.py](https://gist.github.com/HamiltonHuaji/9cfcf2c223cde1d5f00d0d85e71bb9cc). 考虑到 OptiFine 有一些配置是通过在着色器源码中插入特定格式的注释来实现的(指定 MRT 的 render targets 时需在文件中写 `/* DRAWBUFFERS: XYZ */` 这样的注释), 而这种格式的要求较严格(对于空格和缩进不鲁棒), 且在其书写出错时没有报错提示, 这一预处理器还能将形如 `#pragma drawbuffers(XYZ)` 的表达式转换成前述形式, 以避免偶然写出错误的注释格式.
+然而, OptiFine 有一个特性是 `#include` 指令, 即允许着色器文件包含来自其它文件的代码. 这一特性是组织起有序的工程所必须的. 然而 glslangValidator 并不能方便地检查带有该指令的代码(它要求源码中添加 `#extension GL_ARB_shading_language_include : require` 语句, 而我们并不希望 OptiFine 看到这一行). 一个并不复杂的方法是自己写一个预处理器, 完成对文件包含的处理. 笔者的预处理器如下:
+{% spoiler build.py %}<script src="https://gist.github.com/HamiltonHuaji/9cfcf2c223cde1d5f00d0d85e71bb9cc.js"></script>{% endspoiler %}
+考虑到 OptiFine 有一些配置是通过在着色器源码中插入特定格式的注释来实现的(指定 MRT 的 render targets 时需在文件中写 `/* DRAWBUFFERS: XYZ */` 这样的注释), 而这种格式的要求较严格(对于空格和缩进不鲁棒), 且在其书写出错时没有报错提示, 这一预处理器还能将形如 `#pragma drawbuffers(XYZ)` 的表达式转换成前述形式, 以避免偶然写出错误的注释格式.
 
 ## Gamma 校正
 
@@ -43,6 +45,7 @@ $$\overline{L(x)} \geq L(\overline{x})$$
 那么如何进行 Gamma 校正呢? 最直接的办法(然而也很粗糙)就是在 `$2.2$` 附近一个个 Gamma 值地去试. 好在 OptiFine 给我们提供了还不错的菜单功能, 能够大大加快试 Gamma 值的过程. 我们可以制作一个校正用的简单 shaderpack[^3].
 
 将以下代码保存为 `shaders/final.fsh`
+{% spoiler shaders/final.fsh %}
 ```glsl
 #version 430 compatibility
 #define GAMMA 1.9 // [0.5 1.0 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 3.0 3.5 4.0]
@@ -66,6 +69,7 @@ void main() {
     gl_FragData[0] = vec4(pow(finalColor.rgb, vec3(1.f / GAMMA)), 1);
 }
 ```
+{% endspoiler %}
 
 将以下代码保存为 `shaders/shaders.properties`
 ```properties
