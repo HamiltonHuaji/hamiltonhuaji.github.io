@@ -34,17 +34,16 @@ jobs:
           DEPLOY_SECRET: ${{ secrets.BLOG_DEPLOY_SECRET }}
         run: |
           sudo timedatectl set-timezone "Asia/Shanghai"
+          sudo apt install pandoc -y
           mkdir -p ~/.ssh
           echo "$DEPLOY_SECRET" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
           git config --global user.name $GIT_USER
           git config --global user.email $GIT_EMAIL
-          # 生成并部署 `npx hexo clean && npx hexo g -d` or `npm run deploy`
       - name: Deploy
         run: |
           git submodule sync --recursive
           git submodule init
           git submodule update
-          cp ./zh-CN.yml ./node_modules/hexo-theme-next/languages/zh-CN.yml
           npx hexo clean && npx hexo g -d

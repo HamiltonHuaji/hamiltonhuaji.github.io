@@ -18,7 +18,7 @@ tags:
 5. 不使用泛光等光污染后处理特效
 6. 仅处理 `LD*E` 和 `LD*SE` 的路径[^1]
 
-尽管更高的光线追踪性能是可以期望的, 但降噪算法也具有不小的消耗(SVGF 所使用的滤波器大小是 `$5\times 5$` 的, 且要在不同的尺度上执行 5 次), 因此指标(1)的 1~4 spp 是较为合理的结果. 特性(3)是为了 TAA 方便而设置的, 这使得透明物体的透射能较为简单地执行时间重投影, 否则就需要考虑 [Temporally Reliable Motion Vectors for Real-time Ray Tracing
+尽管更高的光线追踪性能是可以期望的, 但降噪算法也具有不小的消耗(SVGF 所使用的滤波器大小是 $5\times 5$ 的, 且要在不同的尺度上执行 5 次), 因此指标(1)的 1~4 spp 是较为合理的结果. 特性(3)是为了 TAA 方便而设置的, 这使得透明物体的透射能较为简单地执行时间重投影, 否则就需要考虑 [Temporally Reliable Motion Vectors for Real-time Ray Tracing
 ](https://sites.cs.ucsb.edu/~lingqi/publications/paper_trmv.pdf) 的方法, 何况 SEUS PTGI 也是这么干的(逃. 特性(4)使得光线追踪的求交完全不用考虑非方块形状的实体, 大大简化了求交算法, 而太阳/月亮的直接光照可以较方便地利用阴影映射处理. 特性(6)是我们能处理的较简单情况, 然而这使得我们无法计算[焦散](https://en.wikipedia.org/wiki/Caustic_(optics))等效果而只能做一些看起来比较像焦散的特效, 但 SEUS PTGI 也是这么干的×2... 何况焦散这样的效果本来就需要光子映射这样的技术去计算.
 
 ![minecraft RTX 的折射. 即使是 Nvidia, 也难以将复杂的反射和折射处理得完美无瑕](artifacts.png)
