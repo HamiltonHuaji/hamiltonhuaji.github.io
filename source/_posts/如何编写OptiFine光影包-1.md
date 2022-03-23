@@ -11,6 +11,7 @@ tags:
 
 <!-- more -->
 作为教学性质的光影包, 笔者期望能在教程结束时实现以下特性和指标:
+
 1. 光线追踪每帧样本量 1~4 spp
 2. 使用 SVGF 降噪
 3. 能处理透明物体的反射, 但出于简化的考虑, 假定所有折射率都是 $1$; 递归的反射也不会被考虑
@@ -91,6 +92,7 @@ G-buffer 的定义如下
 {% ghcode https://github.com/HamiltonHuaji/HowToOptiFine/blob/a2208932f54e50cb434cf52aa9467312b2f7f054/src/inc/gbuffer.hpp 10 29 {cap:false,lang:cpp} %}
 
 其打包的数据有:
+
 + `vec3 diffuse`, 为漫反射颜色
 + `vec3 normal`, 世界坐标下的法线
 + `vec3 tangent`, 世界坐标下的切线
