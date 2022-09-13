@@ -24,7 +24,7 @@
     "hexo-reference": "^1.0.4",
     "hexo-renderer-ejs": "^2.0.0",
     "hexo-renderer-pandoc": "^0.3.1",
-    "hexo-renderer-stylus": "^2.0.0",
+    "hexo-renderer-stylus": "^2.1.0",
     "hexo-server": "^3.0.0",
     "hexo-sliding-spoiler": "github:HamiltonHuaji/hexo-sliding-spoiler#eeef1e06261060987b01206fca21665e7516e3eb",
     "hexo-tag-github-code": "github:HamiltonHuaji/hexo-tag-github-code#047e8cd90091f056fc3d85ab95bd7b767e3ec3dd",
