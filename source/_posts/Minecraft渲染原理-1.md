@@ -121,7 +121,7 @@ tags:
 
 通过搜索 `starsBuffer` 的用法, 可以发现 net/minecraft/client/render/WorldRender.java:1596 的 `public void renderSky(MatrixStack...)` 函数实际上执行了星空的绘制.
 
-此处还出现了一个常见的类: BufferBuilder. 参考 `private void renderStars(BufferBuilder buffer)` 函数, 可以得到 BufferBuilder 的主要使用模式:
+此处还出现了一个在源码中很常见的类: BufferBuilder. 参考 `private void renderStars(BufferBuilder buffer)` 函数, 可以得到 BufferBuilder 的主要使用模式:
 
 {% spoiler BufferBuilder usage pattern %}
 ```java
@@ -136,4 +136,24 @@ vertexBuffer.upload(buffer);
 ```
 {% endspoiler %}
 
-// TODO
+`bufferBuilder.begin()`可以指定绘制模式和顶点格式. 例如, `VertexFormat.DrawMode.QUADS` 就是一种用于绘制四边形的绘制模式; 缓冲区中 4 个顶点为一组构成一个 QUAD, 其中 (0,1,2), (0,2,3) 号顶点用于绘制两个三角形, 这两个有一条边相邻的三角形构成了期望的四边形. 这样的绘制模式的好处在于能节约顶点缓冲区中重复的顶点. 除此之外, 还有 TRIANGLE_FANS/TRIANGLE_STRIP 等绘制模式可用. 顶点格式就是对每个顶点包含的数据的布局的描述, 比如说如下的代码中
+{% spoiler net/minecraft/client/render/VertexFormats.java:26 %}
+```java
+    public static final VertexFormatElement POSITION_ELEMENT = new VertexFormatElement(0, VertexFormatElement.DataType.FLOAT, VertexFormatElement.Type.POSITION, 3);
+    public static VertexFormatElement COLOR_ELEMENT = new VertexFormatElement(0, VertexFormatElement.DataType.UBYTE, VertexFormatElement.Type.COLOR, 4);
+    ...
+    public static final VertexFormat POSITION = new VertexFormat(ImmutableMap.builder().put("Position", POSITION_ELEMENT).build());
+    public static final VertexFormat POSITION_COLOR = new VertexFormat(ImmutableMap.builder().put("Position", POSITION_ELEMENT).put("Color", COLOR_ELEMENT).build());
+```
+{% endspoiler %}
+`VertexFormats.POSITION_ELEMENT` 表示由 3 个 FLOAT 构成的元素, 用于传递坐标值; `VertexFormats.COLOR_ELEMENT` 表示由 4 个 UBYTE 构成的元素, 用于传递顶点色.
+
+`VertexFormats.POSITION` 表示一种只包含坐标值的顶点格式, 坐标值绑定到 `Position` 上, 对应于以下着色器声明:
+```glsl
+layout(location = 0) in vec3 Position;
+```
+`VertexFormats.POSITION_COLOR` 表示既包含坐标又包含顶点色的顶点格式, 分别绑定到 `Position` 和 `Color` 上, 对应于以下着色器声明:
+```glsl
+layout(location = 0) in vec3 Position;
+layout(location = 1) in vec4 Color;
+```
