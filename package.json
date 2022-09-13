@@ -12,7 +12,7 @@
     "version": "6.1.0"
   },
   "dependencies": {
-    "axios": "^0.26.1",
+    "axios": "^0.27.2",
     "hexo": "^6.3.0",
     "hexo-deployer-git": "^3.0.0",
     "hexo-filter-mathjax": "^0.8.0",
