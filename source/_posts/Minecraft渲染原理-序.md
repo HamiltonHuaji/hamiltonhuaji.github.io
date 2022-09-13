@@ -1,5 +1,5 @@
 ---
-title: Minecraft渲染原理-序
+title: Minecraft渲染原理(序)
 date: 2022-09-13 13:55:36
 tags:
 - Computer Graphics
@@ -19,3 +19,5 @@ tags:
 `VulkanMod` 是一个力图将 Vulkan 带入 Minecraft 中的 mod, 目前已有一定可用性, 但尚处于 pre-Alpha 阶段, 具体的光线追踪功能只能由我们自己来实现. 如果能在 `VulkanMod` 的基础上进行修改, 毫无疑问将为我们节省大量的时间.
 
 对这一 mod 进行修改的前提是我们对 Minecraft 的渲染系统有一定的认识. 然而, 互联网上似乎少有对这部分源码的介绍. 作为笔者阅读源码的笔记, 本系列将试图提供 Minecraft 的渲染系统的一个清晰的图景, 以备笔者自己和读者查阅.
+
+本系列使用的 Minecraft 版本是 1.18.2. 期望读者具有基本的 OpenGL 基础和 java 语言知识.
