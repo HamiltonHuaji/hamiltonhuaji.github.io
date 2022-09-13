@@ -85,6 +85,15 @@ tags:
 {% endspoiler %}
 724行的 `this.render(!bl)` 就是我们要找的目标. 这一函数实在太长, 我们只简单罗列正常渲染一帧时其所做事项, 至于退出/重载资源等行为先不管:
 
-+ 将 `renderTaskQueue` 里积攒的任务全部执行
++ 执行 tick
++ 更新鼠标位置(用于gui展开的情况) {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1039 1039 {cap:false,lang:java} %}
++ 对 `RenderSystem.modelViewMatrix` 进行一番操作 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1045 1047 {cap:false,lang:java} %}
++ 绑定 `MinecraftClient.framebuffer` 对应的 FBO {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1049 1049 {cap:false,lang:java} %}
++ 清除雾 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1050 1050 {cap:false,lang:java} %}
++ 启用材质和剔除 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1052 1053 {cap:false,lang:java} %}
++ 调用 `gameRender` 进行真正的绘制 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1057 1057 {cap:false,lang:java} %}
++ 绘制 `toast` (?) {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1059 1059 {cap:false,lang:java} %}
++ 绑定默认帧缓冲 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1068 1068 {cap:false,lang:java} %}
++ 将 `MinecraftClient.framebuffer` 对应的 FBO 的内容使用 `gameRenderer.blitScreenShader` 绘制到默认帧缓冲上 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1072 1072 {cap:false,lang:java} %}
++ 交换颜色缓冲, 使默认帧缓冲上的内容显示到屏幕上 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1076 1076 {cap:false,lang:java} %}
 + // TODO
-
