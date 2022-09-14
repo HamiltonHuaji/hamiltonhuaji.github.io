@@ -71,13 +71,13 @@ tags:
 ```
 {% endspoiler %}
 
-而我们感兴趣的内容主要集中在 `net/minecraft/client/` 目录下. 我们可以从这一目录下的 `net/minecraft/client/main/Main.java` 开始梳理游戏客户端的运行逻辑.
+而我们感兴趣的内容主要集中在 `net/minecraft/client/` 目录下. 通过搜索所有 java 人都熟悉的 `public static void main`, 我们知道可以从这一目录下的 `net/minecraft/client/main/Main.java` 开始梳理游戏客户端的运行逻辑.
 
 {% spoiler net/minecraft/client/main/Main.java %}
 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/main/Main.java 192 218 {cap:false,lang:java} %}
 {% endspoiler %}
 
-<del>这段代码充分展现了 ojng 招聘的员工素质.</del> 事实上, `minecraftClient.shouldRenderAsync()` 永远是 `false`, 因此只有第二个分支会执行; 这导致主线程就是渲染线程.
+<del>这段代码充分展现了 ojng 招聘的员工素质, 通过死循环来等待另一个线程结束.</del> 事实上, `minecraftClient.shouldRenderAsync()` 永远是 `false`, 因此只有第二个分支会执行; 这导致主线程就是渲染线程.
 
 我们可以据此跳转到
 {% spoiler net/minecraft/client/MinecraftClient.java %}
@@ -91,9 +91,13 @@ tags:
 + 绑定 `MinecraftClient.framebuffer` 对应的 FBO {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1049 1049 {cap:false,lang:java} %}
 + 清除雾 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1050 1050 {cap:false,lang:java} %}
 + 启用材质和剔除 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1052 1053 {cap:false,lang:java} %}
-+ 调用 `gameRender` 进行真正的绘制 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1057 1057 {cap:false,lang:java} %}
-+ 绘制 `toast` (?) {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1059 1059 {cap:false,lang:java} %}
++ 调用 `gameRenderer` 进行真正的绘制 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1057 1057 {cap:false,lang:java} %}
++ 绘制 `toast` [^1] {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1059 1059 {cap:false,lang:java} %}
 + 绑定默认帧缓冲 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1068 1068 {cap:false,lang:java} %}
 + 将 `MinecraftClient.framebuffer` 对应的 FBO 的内容使用 `gameRenderer.blitScreenShader` 绘制到默认帧缓冲上 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1072 1072 {cap:false,lang:java} %}
 + 交换颜色缓冲, 使默认帧缓冲上的内容显示到屏幕上 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1076 1076 {cap:false,lang:java} %}
-+ // TODO
++ 等待合适的时间以使帧率不超过设定的限制 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/MinecraftClient.java 1079 1079 {cap:false,lang:java} %}
+
+由上述过程可知, 一切的魔法都发生在 `gameRenderer.render` 中. 且听下回分解.
+
+[^1]: toast是Minecraft在获得成就/获得新配方/完成教程时弹出的框框,大致外观可见`assets/minecraft/textures/gui/toasts.png`
