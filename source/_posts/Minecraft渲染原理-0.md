@@ -12,8 +12,8 @@ tags:
 ```
 即可生成供 IDE 跳转的未混淆的源码包. 这一源码包的文件位置在`VulkanMod/.gradle/loom-cache/1.18.2/`下, 是一个包含了一大堆 `.class` 文件的 jar 包.
 
-<!-- more -->
 展开这个 jar 包(解压缩或者使用 jd-gui), 应当得到如下的目录树:
+<!-- more -->
 
 {% spoiler 目录树 %}
 ```text

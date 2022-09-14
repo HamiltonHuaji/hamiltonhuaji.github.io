@@ -27,7 +27,7 @@
     "hexo-renderer-stylus": "^2.1.0",
     "hexo-server": "^3.0.0",
     "hexo-sliding-spoiler": "github:HamiltonHuaji/hexo-sliding-spoiler#eeef1e06261060987b01206fca21665e7516e3eb",
-    "hexo-tag-github-code": "github:HamiltonHuaji/hexo-tag-github-code#02d37bdb5c07e424e8b3c622fc02225171788dc1",
+    "hexo-tag-github-code": "github:HamiltonHuaji/hexo-tag-github-code#0348bc625501ff2b1ac9b7f4310398db48f60ded",
     "hexo-theme-landscape": "^0.0.3",
     "hexo-theme-next": "^8.13.0",
     "request": "^2.88.2",
