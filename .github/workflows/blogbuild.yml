@@ -32,7 +32,6 @@ jobs:
       - name: Setup SSH Keys and known_hosts
         env:
           DEPLOY_SECRET: ${{ secrets.BLOG_DEPLOY_SECRET }}
-          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
           sudo timedatectl set-timezone "Asia/Shanghai"
           sudo apt install pandoc -y
@@ -43,6 +42,8 @@ jobs:
           git config --global user.name $GIT_USER
           git config --global user.email $GIT_EMAIL
       - name: Deploy
+        env:
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
           git submodule sync --recursive
           git submodule init
