@@ -6,7 +6,23 @@ tags:
 - Minecraft
 ---
 
-上回说到, 渲染一帧(包括绘制世界和绘制UI)的主要逻辑发生在 `net/minecraft/client/render/GamerRenderer.java` 中. 而实际上, `GamerRenderer.java` 又将渲染世界的任务分包给了 `net/minecraft/client/render/WorldRenderer.java`. 这两个类都不是一般的复杂, 因此我们可以尝试从一部分简单的逻辑入手, 来挖掘 ojng 程序员惯用的编码模式.
+上回说到, 渲染一帧(包括绘制世界和绘制UI)的主要逻辑发生在 `net/minecraft/client/render/GameRenderer.java` 中. 而实际上, `GameRenderer.java` 又将渲染世界的任务分包给了 `net/minecraft/client/render/WorldRenderer.java`.
+
+`GameRenderer.render` 函数完成的主要工作罗列如下:
++ 处理暂停相关逻辑, 必要时将 `MinecraftClient.currentScreen` 设置成暂停界面
++ 根据屏幕尺寸设置视口 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/GameRenderer.java 824 824 {cap:false,lang:java} %}
++ 渲染世界 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/GameRenderer.java 827 827 {cap:false,lang:java} %}
++ 将实体的轮廓线绘制到默认帧缓冲 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/GameRenderer.java 829 829 {cap:false,lang:java} %}
++ 进行后处理 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/GameRenderer.java 835 835 {cap:false,lang:java} %}
++ 绑定 `MinecraftClient.framebuffer` 对应的 FBO {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/GameRenderer.java 837 837 {cap:false,lang:java} %}
++ 设置一番 `RenderSystem` 里的 MV 和 P 矩阵 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/GameRenderer.java 841 846 {cap:false,lang:java} %}
++ 设置渲染 GUI 所需的一些 uniform (?), 似乎是为了产生光照效果 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/GameRenderer.java 847 847 {cap:false,lang:java} %}
++ 渲染[反胃](https://minecraft.fandom.com/zh/wiki/%E5%8F%8D%E8%83%83)的特效(如果玩家处于相应状态的话) {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/GameRenderer.java 853 853 {cap:false,lang:java} %}
++ 绘制悬浮项[^1]和 HUD {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/GameRenderer.java 856 857 {cap:false,lang:java} %}
++ 绘制叠加层[^2] {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/GameRenderer.java 864 864 {cap:false,lang:java} %}
++ 绘制 `MinecraftClient.currentScreen`
+
+<!-- 这两个类都不是一般的复杂, 因此我们可以尝试从一部分简单的逻辑入手, 来挖掘 ojng 程序员惯用的编码模式. -->
 
 <!-- more -->
 {% spoiler net/minecraft/client/render/WorldRenderer.java %}
@@ -61,3 +77,6 @@ layout(location = 1) in vec4 Color;
 {% endspoiler %}
 
 // TODO
+
+[^1]: floatItem似乎只出现在不死图腾被触发的时刻,因此可以猜测其内容就是不死图腾的特效
+[^2]: 似乎只有一种overlay,即SplashOverlay,根据其引用的资源`textures/gui/title/mojangstudios.png`可以猜测是渲染启动游戏或重新载入时的红底白字界面
