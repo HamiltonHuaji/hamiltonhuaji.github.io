@@ -100,4 +100,4 @@ tags:
 
 由上述过程可知, 一切的魔法都发生在 `gameRenderer.render` 中. 且听下回分解.
 
-[^1]: toast是Minecraft在获得成就/获得新配方/完成教程时弹出的框框,大致外观可见`assets/minecraft/textures/gui/toasts.png`
+[^1]: toast是Minecraft在获得成就/获得新配方/完成教程时弹出的框框,大致外观可见`assets/minecraft/textures/gui/toasts.png`.

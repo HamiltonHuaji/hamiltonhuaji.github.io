@@ -1,6 +1,7 @@
 ---
 title: Minecraft渲染原理(2)
 date: 2022-09-14 17:15:30
+mathjax: true
 tags:
 - Computer Graphics
 - Minecraft
@@ -63,7 +64,7 @@ BufferRenderer.draw(bufferBuilder);
 ```
 {% endspoiler %}
 
-BufferBuilder 类本质上是对 ByteBuffer 的一个包装, 同时也是多个顶点数据和相关绘制参数构成的栈.
+BufferBuilder 类本质上是对 ByteBuffer 的一个包装, 同时也是多个顶点数据和相关绘制参数构成的栈.[^2]
 
 + `bufferBuilder.begin()`可以指定绘制模式和顶点格式, 并将 bufferBuilder 置于准备接受新一个几何体的顶点数据的状态.
 + `bufferBuilder.vertex(x, y, z)` 会将 x,y,z 的值按顺序写入内置的 ByteBuffer, 并将内部状态设置为对下一个元素写入
@@ -94,12 +95,14 @@ layout(location = 1) in vec4 Color;
 {% endspoiler %}
 1036 和 1038 行的代码是我们啃屎山的开始.
 
-## setupTerrain
+## 屎山: setupTerrain
+
+`WorldRenderer.render` 中的第一座屎山叫 `setupTerrain`. **建议读者直接跳转到本节末尾阅读结论**.
 
 {% spoiler net/minecraft/client/render/WorldRenderer.java:763 %}
 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/WorldRenderer.java 763 772 {cap:false,lang:java} %}
 {% endspoiler %}
-`setupTerrain` 函数首先检查了相比上一帧, 摄影机是否移动到了另一个 `ChunkSection`. `ChunkSection` 就是 $16\times 16\times 16$ 大小的那个被一般玩家叫做区块的东西, 但 ojng 叫它 `ChunkSection`. 如果发生了移动, 则调用 `BuiltChunkStorage.updateCameraPosition(x, z)` 来对部分区块设置其 `origin` 成员(仿佛结果是 `x` 和 `z` 的某种阶梯函数)[^2]:
+`setupTerrain` 函数首先检查了相比上一帧, 摄影机是否移动到了另一个 `ChunkSection`. `ChunkSection` 就是 $16\times 16\times 16$ 大小的那个被一般玩家叫做区块的东西, 但 ojng 叫它 `ChunkSection`. 如果发生了移动, 则调用 `BuiltChunkStorage.updateCameraPosition(x, z)` 来对部分区块设置其 `origin` 成员(仿佛结果是 `x` 和 `z` 的某种阶梯函数):[^3]
 {% spoiler net/minecraft/client/render/BuiltChunkStorage.java:68 %}
 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/BuiltChunkStorage.java 68 88 {cap:false,lang:java} %}
 {% endspoiler %}
@@ -107,26 +110,52 @@ layout(location = 1) in vec4 Color;
 
 此函数中涉及到了多个未被反混淆的变量, 不妨在此处暂时赋一些名字:
 
-|   obfuscated |            deobfuscated |
-| -----------: | ----------------------: |
-|  field_34808 | fullUpdateCullingResult |
-|  field_34809 |                         |
-|  field_34810 |     shouleUpdateCulling |
-|  field_34811 |     recullScheduledTime |
-|  field_34817 |                         |
-|  field_34819 |                         |
-|   class_6600 |                         |
-| method_34808 |                         |
-| method_38549 |                         |
+<span style="color:white;background-color:blue;">TODO:</span> <del>我不想编名字了</del>
 
+|   obfuscated |                                                                                                  type |            deobfuscated |
+| -----------: | ----------------------------------------------------------------------------------------------------: | ----------------------: |
+|  field_34808 |                                                                                    Future<class_6600> | fullUpdateCullingResult |
+|  field_34809 |                                                                                         AtomicBoolean |                         |
+|  field_34810 |                                                                                               boolean |     shouleUpdateCulling |
+|  field_34811 |                                                                                            AtomicLong |     recullScheduledTime |
+|  field_34817 |                                                                           AtomicReference<class_6600> |                         |
+|  field_34818 |                                                                           WorldRenderer.ChunkInfoList |                         |
+|  field_34819 |                                                                              LinkedHashSet<ChunkInfo> |                         |
+|   class_6600 |                                class{ChunkInfoList field_34818;LinkedHashSet<ChunkInfo> field_34819;} |                         |
+| method_34808 | private void method_34808(LinkedHashSet<ChunkInfo>, ChunkInfoList, Vec3d, Queue<ChunkInfo>, boolean); |                         |
+| method_38549 |                                                  private void method_38549(Camera, Queue<ChunkInfo>); |                         |
 
-如果相机相比上一帧移到了不同的 $8\times 8\times 8$ 空间, 或者某个标记 (`WorldRenderer.field_34810`) 被设置时, 则进行一些与区块遮挡剔除相关的操作. 如果没有因为调试而固定使用某个此前捕获的视锥体来进行剔除 (`!hasForcedFrustum`), 且 `Future<class_6600> field_34808` 为空或者不是正在进行的, 则在 `MAIN_WORKER_EXECUTOR` 线程上进行一些操作:
+如果相机相比上一帧移到了不同的 $8\times 8\times 8$ 空间, 或者某个标记 (`WorldRenderer.field_34810`) 被设置时, 则进行一些与区块遮挡剔除相关的操作. 如果没有因为调试而固定使用某个此前捕获的视锥体来进行剔除 (`!hasForcedFrustum`), 且 `Future<class_6600> field_34808` 为空或者不是正在进行的, 则将以下操作提交到 `MAIN_WORKER_EXECUTOR` 线程上执行:
 
-+ 如果当前摄像机所在区块已经被渲染(可能需要换个词, `this.chunks.getRenderedChunk(blockPos)!=null`), 则将当前区块加入某个队列(`ArrayDeque<ChunkInfo> queue`)以作为广度优先的开始; 否则将视距内某个高度上所有已渲染的区块按从近到远的顺序加入前述队列.
-, 剔除掉例如 6 个方向上都被遮挡的区块, 并计算 propagationLevel 以便于调试的可视化.
++ 初始化某个广度优先的 FIFO 队列, 即方法 `method_38549` 的内容: 如果当前摄像机所在区块已经被渲染(可能需要换个词, 反正就是 `this.chunks.getRenderedChunk(blockPos)!=null`), 则将当前区块对应的 `ChunkInfo` 加入队列以作为广度优先的开始; 否则将视距内某个高度上所有已渲染的区块对应的 `ChunkInfo` 按从近到远的顺序加入该队列 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/WorldRenderer.java 801 802 {cap:false,lang:java} %}
++ 进行某种奇怪的广度优先操作, 即方法 `method_34808` 的内容: 从队列中取出一个 `ChunkInfo`, 将其放入 `field_34808.field_34819`, 并对其 6 个方向上邻接的区块进行某些神必的判断(可能是为了剔除掉例如 6 个方向上都被遮挡的区块), 更新其剔除状态(`updateCullingState`), 并计算其 `propagationLevel` 以便于调试的可视化; 最后在某些情况下将邻接区块放回队列, 并更新 `field_34808.field_34818` 对于该区块的值; 有时还把 `WorldRenderer.field_34810` 设置到 500 毫秒以后, 以规划一次遮挡剔除运算 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/WorldRenderer.java 803 804 {cap:false,lang:java} %}
++ 最后将以上结果填充到 `field_34817` 中, 并设置 `field_34809` 以表明有新的剔除结果可用.
+
+提交以上任务后, 渲染线程立即调用 `field_34817.get()`, 以得到此前已有的任务结果. 如果 `builtChunks` 非空, 则从 `builtChunks` 选取 `field_34817.get().field_34818` 中存在的区块加入到另一个队列中, 然后再重复 `method_34808` 的操作.
 
 最后, 在转动视角或有新鲜的剔除结果(field_34809==true)时, 通过调用 `WorldRenderer.applyFrustum()`, 将 field_34817 内所有包围盒与视锥相交或者在视锥体内的区块加入 `WorldRenderer.chunkInfos` 中.
 
+总的来看, `setupTerrain` 函数的主要功能是对区块进行遮挡剔除和视锥剔除; <del>如此复杂的函数笔者不想用心读, 写出来的东西读者也不忍心看, 想必 ojng 的程序员也不想用心维护, 难免有几个 bug .</del>[^4]
+
+## 屎山: updateChunks
+
+上一座屎山 `setupTerrain` 函数过滤过的区块被加入了 `WorldRenderer.chunkInfos`, 因此这座屎山就继续对 `WorldRenderer.chunkInfos` 的内容进行遍历. 只有在某个区块既带有 `needsRebuild` 标记(即满足 `builtChunk.needsRebuild()`)且 `WorldRenderer.world.getChunk(chunkPos.x, chunkPos.z).shouldRenderOnUpdate()` 时, 才会继续对其处理. 对于被处理的区块, 以下行为将发生:
+
++ 在客户端选项里的 `chunkBuilderMode` 是邻近(`ChunkBuilderMode.NEARBY`)时, 带有 `needsImportantRebuild` 标记或者离摄像机距离小于 $16\sqrt{3}$ 的区块会在渲染线程中立即被同步地重建(rebuild).
++ 在客户端选项里的 `chunkBuilderMode` 是受玩家影响的(`ChunkBuilderMode.PLAYER_AFFECTED`)时, 只有带有 `needsImportantRebuild` 标记的区块会立即被同步重建.
++ 以上的同步重建完成后会清除 `needsRebuild` 标记和 `needsImportantRebuild` 标记, 以避免重建重复发生; 重建完成时一个上传重建结果至显存的任务将被添加到 `WorldRenderer.chunkBuilder` 内部的上传队列 `uploadQueue`
++ 在 `WorldRenderer.chunkInfos` 完成遍历后, `uploadQueue` 将被执行直至清空.
++ 不满足以上重建条件的区块会被收集起来, 丢进 `WorldRenderer.chunkBuilder` 内部的重建队列 `prioritizedTaskQueue` 或 `taskQueue` 里异步重建, 重建完成时上传重建结果的任务同样将被添加到上传队列; 在提交重建任务后, 重建相关标记也会被清除.
+
+区块重建任务最终会调用 `ChunkBuilder.BuiltChunk.RebuildTask.render` 函数, 以收集方块/方块实体的信息, 构建区块的顶点数据, 并写入不同的 `RenderLayer` 的缓冲区中:[^5]
+{% spoiler net/minecraft/client/render/chunk/ChunkBuilder.java:576 %}
+{% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/chunk/ChunkBuilder.java 576 637 {cap:false,lang:java} %}
+{% endspoiler %}
+
+在完成区块剔除/区块更新和上传顶点缓冲区后, 各 `RenderLayer` 对应的顶点缓冲区就准备好绘制了. `WorldRenderer.renderLayer(RenderLayer, MatrixStack, double, double, double, Matrix4f)` 是具体执行此类绘制的函数. 欲知后事如何, 且听下回分解.
 
 [^1]: 似乎是渲染日出和日落的时候覆盖掉大气雾时使用的网格
-[^2]: 剧透一下,`origin`成员会与相机位置进行加减之后作为`chunkOffset`这一uniform变量传递给着色器,并加到顶点的位置上来获得真正的世界坐标
+[^2]: szszss的[博文](http://blog.hakugyokurou.net/?p=734)中对常常与`BufferBuilder`一起出现的`Tessellator`的来源进行了解释,即试图模拟OpenGL立即模式的惯用法.
+[^3]: 剧透一下,`origin`成员会与相机位置进行加减之后作为`chunkOffset`这一uniform变量传递给着色器,并加到顶点的位置上来获得真正的世界坐标.
+[^4]: 一般的实践是利用上一帧的深度缓冲,与各区块的包围盒的深度进行比较,bug少不说,程序员写着也舒服.
+[^5]: `RenderLayer`可以理解成需要不同的渲染方式的物体构成的集合,例如`SOLID`是完全不透明的方块,`CUTOUT`是有镂空部分的方块,`CUTOUT_MIPPED`是带有mipmapping的前者,`TRANSLUCENT`是半透明的方块.详见[这里](https://neutrino.v2mcdev.com/block/rendertype.html).

@@ -40,7 +40,7 @@ tags:
 
 欲知 `WorldRenderer.render(MatrixStack ...)` 如何, 且听下回分解.
 
-[^1]: 带有[发光](https://minecraft.fandom.com/zh/wiki/%E5%8F%91%E5%85%89)效果的实体,其特效就是通过这一步实现的
-[^2]: 例如观察者模式下的蜘蛛/末影人/苦力怕视角
-[^3]: floatItem似乎只出现在不死图腾被触发的时刻,因此可以猜测其内容就是不死图腾的特效
-[^4]: 似乎只有一种overlay,即SplashOverlay,根据其引用的资源`textures/gui/title/mojangstudios.png`可以猜测是渲染启动游戏或重新载入时的红底白字界面
+[^1]: 带有[发光](https://minecraft.fandom.com/zh/wiki/%E5%8F%91%E5%85%89)效果的实体,其特效就是通过这一步实现的.
+[^2]: 例如观察者模式下的蜘蛛/末影人/苦力怕视角.
+[^3]: floatItem似乎只出现在不死图腾被触发的时刻,因此可以猜测其内容就是不死图腾的特效.
+[^4]: 似乎只有一种overlay,即SplashOverlay,根据其引用的资源`textures/gui/title/mojangstudios.png`可以猜测是渲染启动游戏或重新载入时的红底白字界面.
