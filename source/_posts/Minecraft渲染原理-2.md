@@ -88,6 +88,10 @@ layout(location = 1) in vec4 Color;
 ```
 {% endspoiler %}
 
-// TODO
+回到对 `WorldRenderer.render` 的分析上来.
+{% spoiler net/minecraft/client/render/WorldRenderer.java:1035 %}
+{% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/WorldRenderer.java 1035 1038 {cap:false,lang:java} %}
+{% endspoiler %}
+
 
 [^1]: 似乎是渲染日出和日落的时候覆盖掉大气雾
