@@ -99,11 +99,34 @@ layout(location = 1) in vec4 Color;
 {% spoiler net/minecraft/client/render/WorldRenderer.java:763 %}
 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/WorldRenderer.java 763 772 {cap:false,lang:java} %}
 {% endspoiler %}
-`setupTerrain` 函数首先检查了相比上一帧, 摄影机是否移动到了另一个 `ChunkSection`. `ChunkSection` 就是 $16\times 16\times 16$ 大小的那个被一般玩家叫做区块的东西, 但 ojng 叫它 `ChunkSection`. 如果发生了移动, 则调用 `BuiltChunkStorage.updateCameraPosition(x, z)` 来对部分区块设置其 `origin` 成员:
+`setupTerrain` 函数首先检查了相比上一帧, 摄影机是否移动到了另一个 `ChunkSection`. `ChunkSection` 就是 $16\times 16\times 16$ 大小的那个被一般玩家叫做区块的东西, 但 ojng 叫它 `ChunkSection`. 如果发生了移动, 则调用 `BuiltChunkStorage.updateCameraPosition(x, z)` 来对部分区块设置其 `origin` 成员(仿佛结果是 `x` 和 `z` 的某种阶梯函数)[^2]:
 {% spoiler net/minecraft/client/render/BuiltChunkStorage.java:68 %}
 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/BuiltChunkStorage.java 68 88 {cap:false,lang:java} %}
 {% endspoiler %}
 随后通过调用 `ChunkBuilder.setCameraPosition()` 告知 `chunkBuilder` 摄像机的新位置. 这是为了帮助 chunkBuilder 进行诸如将区块按离摄像机的距离来排序的操作.
 
+此函数中涉及到了多个未被反混淆的变量, 不妨在此处暂时赋一些名字:
+
+|   obfuscated |            deobfuscated |
+| -----------: | ----------------------: |
+|  field_34808 | fullUpdateCullingResult |
+|  field_34809 |                         |
+|  field_34810 |     shouleUpdateCulling |
+|  field_34811 |     recullScheduledTime |
+|  field_34817 |                         |
+|  field_34819 |                         |
+|   class_6600 |                         |
+| method_34808 |                         |
+| method_38549 |                         |
+
+
+如果相机相比上一帧移到了不同的 $8\times 8\times 8$ 空间, 或者某个标记 (`WorldRenderer.field_34810`) 被设置时, 则进行一些与区块遮挡剔除相关的操作. 如果没有因为调试而固定使用某个此前捕获的视锥体来进行剔除 (`!hasForcedFrustum`), 且 `Future<class_6600> field_34808` 为空或者不是正在进行的, 则在 `MAIN_WORKER_EXECUTOR` 线程上进行一些操作:
+
++ 如果当前摄像机所在区块已经被渲染(可能需要换个词, `this.chunks.getRenderedChunk(blockPos)!=null`), 则将当前区块加入某个队列(`ArrayDeque<ChunkInfo> queue`)以作为广度优先的开始; 否则将视距内某个高度上所有已渲染的区块按从近到远的顺序加入前述队列.
+, 剔除掉例如 6 个方向上都被遮挡的区块, 并计算 propagationLevel 以便于调试的可视化.
+
+最后, 在转动视角或有新鲜的剔除结果(field_34809==true)时, 通过调用 `WorldRenderer.applyFrustum()`, 将 field_34817 内所有包围盒与视锥相交或者在视锥体内的区块加入 `WorldRenderer.chunkInfos` 中.
+
 
 [^1]: 似乎是渲染日出和日落的时候覆盖掉大气雾时使用的网格
+[^2]: 剧透一下,`origin`成员会与相机位置进行加减之后作为`chunkOffset`这一uniform变量传递给着色器,并加到顶点的位置上来获得真正的世界坐标
