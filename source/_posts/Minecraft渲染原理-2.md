@@ -41,7 +41,7 @@ tags:
 {% spoiler net/minecraft/client/render/WorldRenderer.java:1630 %}
 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/WorldRenderer.java 1630 1659 {cap:false,lang:java} %}
 {% endspoiler %}
-这段代码看似只是进行了类似于 `glUseProgram` 的操作, 但实际上同时进行了绘制(`glDrawElements`), 惊不惊喜意不意外? <del>ojng 员工素质展现×3</del> 不仅如此, 在后面的 `getFogColorOverride` 返回非空的东西时[^1], ojng 还当场造了个 buffer, 用 BufferRender 来现场渲染. <del>要复用这种不太变的 buffer 就坚持到底嘛.</del>
+1630 行的 `this.lightSkyBuffer.setShader(...)` 看似只是进行了类似于 `glUseProgram` 的操作, 但实际上同时进行了绘制(`glDrawElements`), 惊不惊喜意不意外? <del>yarn 有的方法命名还是比较有问题的</del> 在后面的 `getFogColorOverride` 返回非空的东西时[^1], ojng 当场造了个 buffer, 用 BufferRender 来现场渲染. <del>要复用这种不太变的 buffer 就坚持到底嘛.</del>
 
 此处还出现了一个在源码中很常见的类: BufferBuilder. 参考 `private void renderStars(BufferBuilder buffer)` 函数, 可以得到 BufferBuilder 的主要使用模式:
 
@@ -92,6 +92,18 @@ layout(location = 1) in vec4 Color;
 {% spoiler net/minecraft/client/render/WorldRenderer.java:1035 %}
 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/WorldRenderer.java 1035 1038 {cap:false,lang:java} %}
 {% endspoiler %}
+1036 和 1038 行的代码是我们啃屎山的开始.
+
+## setupTerrain
+
+{% spoiler net/minecraft/client/render/WorldRenderer.java:763 %}
+{% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/WorldRenderer.java 763 772 {cap:false,lang:java} %}
+{% endspoiler %}
+`setupTerrain` 函数首先检查了相比上一帧, 摄影机是否移动到了另一个 `ChunkSection`. `ChunkSection` 就是 $16\times 16\times 16$ 大小的那个被一般玩家叫做区块的东西, 但 ojng 叫它 `ChunkSection`. 如果发生了移动, 则调用 `BuiltChunkStorage.updateCameraPosition(x, z)` 来对部分区块设置其 `origin` 成员:
+{% spoiler net/minecraft/client/render/BuiltChunkStorage.java:68 %}
+{% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/BuiltChunkStorage.java 68 88 {cap:false,lang:java} %}
+{% endspoiler %}
+随后通过调用 `ChunkBuilder.setCameraPosition()` 告知 `chunkBuilder` 摄像机的新位置. 这是为了帮助 chunkBuilder 进行诸如将区块按离摄像机的距离来排序的操作.
 
 
-[^1]: 似乎是渲染日出和日落的时候覆盖掉大气雾
+[^1]: 似乎是渲染日出和日落的时候覆盖掉大气雾时使用的网格
