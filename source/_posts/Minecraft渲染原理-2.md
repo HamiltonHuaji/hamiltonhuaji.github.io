@@ -108,32 +108,32 @@ layout(location = 1) in vec4 Color;
 {% endspoiler %}
 随后通过调用 `ChunkBuilder.setCameraPosition()` 告知 `chunkBuilder` 摄像机的新位置. 这是为了帮助 chunkBuilder 进行诸如将区块按离摄像机的距离来排序的操作.
 
-此函数中涉及到了多个未被反混淆的变量, 不妨在此处暂时赋一些名字:
+此函数中涉及到了多个 yarn 中未被赋予名字的变量和方法, 不妨在此处给出其 mojang 名以供参考:
 
-<span style="color:white;background-color:blue;">TODO:</span> <del>我不想编名字了</del>
+| obfuscated/yarn name |                                                                    type |                                 mojang name |
+| -------------------: | ----------------------------------------------------------------------: | ------------------------------------------: |
+|        WorldRenderer |                                                                       - | net.minecraft.client.renderer.LevelRenderer |
+|        ChunkInfoList |                                                                       - |                 LevelRenderer$RenderInfoMap |
+|           class_6600 |                         class{ChunkInfoList; LinkedHashSet<ChunkInfo>;} |            LevelRenderer$RenderChunkStorage |
+|          field_34808 |                                                      Future<class_6600> |                   lastFullRenderChunkUpdate |
+|          field_34809 |                                                           AtomicBoolean |                          needsFrustumUpdate |
+|          field_34810 |                                                                 boolean |                  needsFullRenderChunkUpdate |
+|          field_34811 |                                                              AtomicLong |                        nextFullUpdateMillis |
+|          field_34817 |                                             AtomicReference<class_6600> |                          renderChunkStorage |
+|          field_34818 |                                             WorldRenderer.ChunkInfoList |                               renderInfoMap |
+|          field_34819 |                                                LinkedHashSet<ChunkInfo> |                                renderChunks |
+|         method_34808 | void method_34808(LinkedHashSet, ChunkInfoList, Vec3d, Queue, boolean); |                          updateRenderChunks |
+|         method_38549 |                    private void method_38549(Camera, Queue<ChunkInfo>); |                initializeQueueForFullUpdate |
 
-|   obfuscated |                                                                                                  type |            deobfuscated |
-| -----------: | ----------------------------------------------------------------------------------------------------: | ----------------------: |
-|  field_34808 |                                                                                    Future<class_6600> | fullUpdateCullingResult |
-|  field_34809 |                                                                                         AtomicBoolean |                         |
-|  field_34810 |                                                                                               boolean |     shouleUpdateCulling |
-|  field_34811 |                                                                                            AtomicLong |     recullScheduledTime |
-|  field_34817 |                                                                           AtomicReference<class_6600> |                         |
-|  field_34818 |                                                                           WorldRenderer.ChunkInfoList |                         |
-|  field_34819 |                                                                              LinkedHashSet<ChunkInfo> |                         |
-|   class_6600 |                                class{ChunkInfoList field_34818;LinkedHashSet<ChunkInfo> field_34819;} |                         |
-| method_34808 | private void method_34808(LinkedHashSet<ChunkInfo>, ChunkInfoList, Vec3d, Queue<ChunkInfo>, boolean); |                         |
-| method_38549 |                                                  private void method_38549(Camera, Queue<ChunkInfo>); |                         |
+如果相机相比上一帧移到了不同的 $8\times 8\times 8$ 空间, 或者 `needsFullRenderChunkUpdate` 标记被设置时, 则进行一些与区块遮挡剔除相关的操作. 如果没有因为调试而固定使用某个此前捕获的视锥体来进行剔除 (`!hasForcedFrustum`), 且 `lastFullRenderChunkUpdate` 为空或者不是正在进行的, 则将以下操作提交到 `MAIN_WORKER_EXECUTOR` 线程上执行:
 
-如果相机相比上一帧移到了不同的 $8\times 8\times 8$ 空间, 或者某个标记 (`WorldRenderer.field_34810`) 被设置时, 则进行一些与区块遮挡剔除相关的操作. 如果没有因为调试而固定使用某个此前捕获的视锥体来进行剔除 (`!hasForcedFrustum`), 且 `Future<class_6600> field_34808` 为空或者不是正在进行的, 则将以下操作提交到 `MAIN_WORKER_EXECUTOR` 线程上执行:
-
-+ 初始化某个广度优先的 FIFO 队列, 即方法 `method_38549` 的内容: 如果当前摄像机所在区块已经被渲染(可能需要换个词, 反正就是 `this.chunks.getRenderedChunk(blockPos)!=null`), 则将当前区块对应的 `ChunkInfo` 加入队列以作为广度优先的开始; 否则将视距内某个高度上所有已渲染的区块对应的 `ChunkInfo` 按从近到远的顺序加入该队列 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/WorldRenderer.java 801 802 {cap:false,lang:java} %}
-+ 进行某种奇怪的广度优先操作, 即方法 `method_34808` 的内容: 从队列中取出一个 `ChunkInfo`, 将其放入 `field_34808.field_34819`, 并对其 6 个方向上邻接的区块进行某些神必的判断(可能是为了剔除掉例如 6 个方向上都被遮挡的区块), 更新其剔除状态(`updateCullingState`), 并计算其 `propagationLevel` 以便于调试的可视化; 最后在某些情况下将邻接区块放回队列, 并更新 `field_34808.field_34818` 对于该区块的值; 有时还把 `WorldRenderer.field_34810` 设置到 500 毫秒以后, 以规划一次遮挡剔除运算 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/WorldRenderer.java 803 804 {cap:false,lang:java} %}
++ 初始化某个广度优先的 FIFO 队列, 即方法 `initializeQueueForFullUpdate` 的内容: 如果当前摄像机所在区块已经被渲染(可能需要换个词, 反正就是 `this.chunks.getRenderedChunk(blockPos)!=null`), 则将当前区块对应的 `ChunkInfo` 加入队列以作为广度优先的开始; 否则将视距内某个高度上所有已渲染的区块对应的 `ChunkInfo` 按从近到远的顺序加入该队列 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/WorldRenderer.java 801 802 {cap:false,lang:java} %}
++ 进行某种奇怪的广度优先操作, 即方法 `updateRenderChunks` 的内容: 从队列中取出一个 `ChunkInfo`, 将其放入 `field_34817.get().field_34819`, 并对其 6 个方向上邻接的区块进行某些神必的判断(可能是为了剔除掉例如 6 个方向上都被遮挡的区块), 更新其剔除状态(`updateCullingState`), 并计算其 `propagationLevel` 以便于调试的可视化; 最后在某些情况下将邻接区块放回队列, 并更新 `field_34817.get().field_34818` 对于该区块的值; 有时还把 `WorldRenderer.field_34811` 设置到 500 毫秒以后, 以规划一次完整的遮挡剔除运算 {% ghcode https://github.com/HamiltonHuaji/minecraft-project-merged-named-sources/blob/master/net/minecraft/client/render/WorldRenderer.java 803 804 {cap:false,lang:java} %}
 + 最后将以上结果填充到 `field_34817` 中, 并设置 `field_34809` 以表明有新的剔除结果可用.
 
 提交以上任务后, 渲染线程立即调用 `field_34817.get()`, 以得到此前已有的任务结果. 如果 `builtChunks` 非空, 则从 `builtChunks` 选取 `field_34817.get().field_34818` 中存在的区块加入到另一个队列中, 然后再重复 `method_34808` 的操作.
 
-最后, 在转动视角或有新鲜的剔除结果(field_34809==true)时, 通过调用 `WorldRenderer.applyFrustum()`, 将 field_34817 内所有包围盒与视锥相交或者在视锥体内的区块加入 `WorldRenderer.chunkInfos` 中.
+最后, 在转动视角或有新鲜的剔除结果(`field_34809` 被设置)时, 通过调用 `WorldRenderer.applyFrustum()`, 将 `field_34817` 内所有包围盒与视锥相交或者在视锥体内的区块加入 `WorldRenderer.chunkInfos` 中.
 
 总的来看, `setupTerrain` 函数的主要功能是对区块进行遮挡剔除和视锥剔除; <del>如此复杂的函数笔者不想用心读, 写出来的东西读者也不忍心看, 想必 ojng 的程序员也不想用心维护, 难免有几个 bug .</del>[^4]
 
