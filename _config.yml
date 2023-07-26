@@ -103,7 +103,7 @@ ignore:
 ## Themes: https://hexo.io/themes/
 theme: next
 image_caption:
-  enable: true
+  enable: false
   # class_name: #if you wanna customize the style for the caption,you can assign a class name, default is 'image-caption'
 github_code:
   cap: false

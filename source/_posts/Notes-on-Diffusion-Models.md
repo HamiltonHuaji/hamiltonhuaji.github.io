@@ -1,0 +1,111 @@
+---
+title: Notes on Diffusion Models
+date: 2023-07-24 15:00:00
+mathjax: true
+---
+
+以 DDPM 为代表的生成扩散模型在图像生成等领域上具有良好的效果, 并在学AI的文盲们面前小小地展示了一点数学功底的作用.
+
+然而, 笔者读到的几乎所有扩散模型的教程都生硬地打着各种比喻, 提供了远超必须的直观性, 而完全失去了对其后数学动机的介绍. 即, 这样一个乍一看很陌生的过程是如何在保持数学上的有效性时被想到的.
+
+因此, 本文希望展现这一想法可能的一种来龙去脉, 让读者感受到"想到这些关键点, 我也能发现 DDPM".
+
+## 问题定义
+
+考虑一个高维分布$p(x)$. 欲根据这个分布来采样出所需的结果. 分布本身的解析式不得而知; 因为维度较高且足够复杂, 即使有解析式也没有什么卵用.
+
+在没有办法解析地生成随机样本的情况下, 在这个分布中取得了一组样本$\lbrace X_i\rbrace$, 根据这组样本可以取得关于分布的信息. 这就是说, 任何函数在这个分布上的期望都可以用这组样本来近似: $$E_{x\sim p(x)}f(x)\simeq \sum_i f(X_i)$$
+
+## 从流模型开始
+
+首先考虑从简单的分布(e.g, 均匀分布)$p(z)$中产生更复杂分布$q(x)$的技术. 一个最简单的思路是从$p(z)$中采样得到$z$后, 令$x=f^{-1}(z)$使得$x\sim q(x)$. 这就要求$$q(x)=p(f(x))\cdot\lvert\text{det}(\frac{\partial f}{\partial x})\rvert$$
+
+如果$q(x)$没有可用且足够简单的解析式, 则我们需要从数据中学习$f(x)=f_\theta(x)$, 并最小化上式两边分布的散度, $\theta$为可学习的参数. 同时, 学到的$f_\theta(x)$需要满足
+
++ 容易求逆
++ 雅可比行列式便于计算(例如, 恒定为$1$)
++ 具有足够的表达力, 以捕捉复杂分布的映射关系
+
+容易想象, 前面这两点往往要求$f_\theta(x)$具有简单的形式, 而这又限制了函数的表达力.
+
+[NICE: Non-linear Independent Components Estimation](https://arxiv.org/abs/1410.8516)这篇工作较好地实现了上面三项要求. 它使用多个堆叠的简单变换来表示$$f_\theta(x)=(f_1\circ f_2 \circ \dots)(x)$$
+
+其中, $f_i(x)$的雅可比矩阵均具有分块下三角形式, 对角线上的块为单位阵. 这可以通过如下变换来实现: $$\begin{align}x&=[x_1, x_2]\\h_1&=x_1\\h_2&=x_2+m(x_1)\\h&=[h_1, h_2]\end{align}$$
+
+因此, $\forall i,\ \text{det}(\frac{\partial f_i}{\partial x})=1$.
+
+## ODE描述的流模型
+
+不难想到, NICE中使用的变换, 其堆叠层数越多, 所具有的非线性拟合能力就越强. 然而另一方面, 每个被堆叠的层可选取的函数形式都太受限了, 也带有过多的人工设计的痕迹, 因而整个堆叠所能等价的函数只是函数空间中的一小部分.
+
+一个自然的想法是, 取堆叠层数$N$无穷大的极限. 在这一极限下, 每一层均应趋近于一个恒等变换加上与$\frac{1}{N}$同阶无穷小的变换, 以保持整个变换存在极限.
+
+稍有物理背景的读者可能会看出, 对一个量连续施加上面所说的变换, 就等价于这个量在随着时间不停地演化.
+
+$$\begin{align}x \rightarrow \dots \rightarrow x_t \rightarrow x_{t+\Delta t} \rightarrow \dots \rightarrow z\end{align}$$
+
+因此我们在前述极限下, 将层数看作"时间"$t$, 就可以写出一个ODE的形式$$dx_t=f_t(x_t)dt$$, 来描述分布$q(x)$中一个样本$x_0$, 是如何在逐层变换下变为$x_T=z$的; 该ODE的逆过程, 则能将$z$变换回$x_0$. 这一逆过程的存在是非常自然的.
+
+此时, 我们实现了前面三条要求中的两条. ODE并不天然保证过程的行列式为$1$, 因此我们还需为这一过程增加连续性约束, 即$q_t(x_t)dx_t$在ODE过程中是守恒的. 参考可压缩流体的连续性方程, 我们可以写出$$\frac{\partial q_t(x)}{\partial t}+\nabla_{x_t}\cdot [q_t(x)f_t(x)]=0$$
+
+这一问题有非常清晰的物理意义, 即将$t$看作原分布之外的一个额外维度, 一组粒子(样本点)在$t=0$的起始面上沿着一个向量场的场线运动, 落在$t=T$的终止面上构成了采样的一些样本. 由于粒子不会消失, 也不会在向量场中随时间累积, 因此连续性约束是非常自然的, 仅要求这个向量场是无散的.
+
+## SDE描述的流模型
+
+在上文中, 我们设想了使用ODE来代替人工设计的可逆变换, 搭建源分布和目标分布之间的桥梁. 然而ODE并不是最广的那一类变换的描述方法. 在ODE中, 一组样本在时间中的轨迹构成了"流管"的边界, "流管"中的样本不会流动到"流管"外面去.
+
+然而, 这一性质在我们的目的中其实并不需要满足. 流管内外的样本完全可以随机交换, 只要从统计上说流管的流量是守恒的即可. 换句话说, 前面的ODE只需要负责描述概率密度的"流动", 而无需对单个样本的采样过程负责. 因此前述的ODE可以进一步扩展为SDE来描述具体样本的采样过程, 加上一个随机项, 写为$$dx_t=f_t(x_t)dt+g_t\varepsilon\sqrt{dt},\ \varepsilon\sim\mathcal{N}(\boldsymbol{0},\boldsymbol{I})$$
+
+在给定单样本演化所遵从的以上SDE时, 我们也可以写出其概率密度所要遵从的ODE(称作概率流ODE). 此正所谓 Fokker-Planck 方程.
+
+为了推导概率流ODE, 我们可以先写出它的传播子. 即, 若$t$时刻, $p_t(x)=\delta(x-x_t)$, $t':=t+\Delta t$时刻$x_{t'}$遵从的概率密度函数$p_{t'}(x)$.
+
+由于 $$\begin{align}P(X_{t+\Delta t}\leq x_{t+\Delta t})&=\iint_{x+f_t(x)\Delta t+g_t\varepsilon\sqrt{\Delta t}\leq x_{t+\Delta t}} p_t(x)p(\varepsilon) d x d\varepsilon\\&=\iint_{x+f_t(x)\Delta t+g_t\varepsilon\sqrt{\Delta t}\leq x_{t+\Delta t}} \delta(x-x_t)p(\varepsilon) d x d\varepsilon\\&=\int_{x} \delta(x-x_t)[\int_{g_t\varepsilon\sqrt{\Delta t}\leq x_{t+\Delta t}-x-f_t(x_t)\Delta t}p(\varepsilon) d\varepsilon] dx\\&=\int_{\varepsilon \leq \frac{1}{g_t\sqrt{\Delta t}}(x_{t+\Delta t}-x_t-f_t(x_t)\Delta t)}p(\varepsilon)d\varepsilon\end{align}$$
+
+可以知道 $$p_{t'}(x_{t'})=\frac{1}{g_t\sqrt{2\pi\Delta t}}\exp\lbrace-\frac{(x_{t'}-x_t-f_t(x_t)\Delta t)^2}{2g_t^2\Delta t}\rbrace:=G(x_{t'}, t'\vert x_{t}, t)$$
+
+因此在任意给定的$t$时刻概率密度$p_t(x)$下, $t+\Delta t$时刻$x_{t+\Delta t}$遵从的概率密度函数$p_{t+\Delta t}(x)$可以使用传播子与$p_t(x)$的卷积得到: $$p_{t'}(x_{t'})=\int G(x_{t'}, t'\vert x_{t}, t) p_t(x_t) d x_t$$
+
+以上表达式都是在$\Delta t\rightarrow 0$的极限下而言的. 概率流ODE大概率是将概率密度函数对时间的偏导和一些量对空间的偏导联系起来的方程式, 因此我们应当首先求 $\dfrac{\partial p_{t'}(x_{t'})}{\partial t'}$, 然后看能凑出何种形式.
+
+$$\begin{align}
+\frac{\partial p_{t'}(x_{t'})}{\partial t'}
+&=\int\frac{\partial G(x_{t'}, t'\vert x_{t}, t)}{\partial t'}  p_t(x_t) d x_t
+\end{align}$$
+
+而
+$$\begin{align}
+\frac{\partial G(x_{t'}, t'\vert x_{t}, t)}{\partial x_{t'}}
+&=-\frac{x_{t'}-x_t-f_t(x_t)\Delta t}{g_t^2\Delta t} G(x_{t'}, t'\vert x_{t}, t)
+\end{align}$$
+$$\begin{align}
+\frac{\partial^2 G(x_{t'}, t'\vert x_{t}, t)}{\partial x_{t'}^2}
+&=\frac{(x_{t'} - x_t) (x_{t'} - x_t - 2 f_t(x_t) \Delta t) + \Delta t (-gt^2 + f_t(x_t)^2 \Delta t)}{g_t^4\Delta t^2} G(x_{t'}, t'\vert x_{t}, t)
+\end{align}$$
+
+因此可以凑出一个关于$G$的等式
+$$\begin{align}
+\frac{\partial G(x_{t'}, t'\vert x_{t}, t)}{\partial x_{t'}}=\frac{g_t^2}{2}\frac{\partial^2 G(x_{t'}, t'\vert x_{t}, t)}{\partial x_{t'}^2}-f_t(x_t)\frac{\partial G(x_{t'}, t'\vert x_{t}, t)}{\partial x_{t'}}
+\end{align}$$
+
+用此式取代掉上面的积分中$G$对$t'$的偏导, 并取$\Delta t\rightarrow 0$的极限. 考虑到 $$\lim_{\Delta t\rightarrow 0} G(x_{t+\Delta t}, t+\Delta t\vert x_{t}, t)=\delta(x_{t+\Delta t}-x_t)$$ 利用$\delta$函数的性质, 有
+<!-- 
+$$\begin{align}
+\lim_{\Delta t\rightarrow 0} \frac{\partial p_{t'}(x_{t'})}{\partial t'}
+&=\lim_{\Delta t\rightarrow 0} \int \lbrace \frac{g_t^2}{2}\frac{\partial^2 G(x_{t'}, t'\vert x_{t}, t)}{\partial x_{t'}^2}-f_t(x_t)\frac{\partial G(x_{t'}, t'\vert x_{t}, t)}{\partial x_{t'}} \rbrace p_t(x_t) d x_t\\
+\end{align}$$ -->
+
+$$\begin{align}
+\lim_{\Delta t\rightarrow 0} \frac{\partial p_{t'}(x_{t'})}{\partial t'}
+&=\lim_{\Delta t\rightarrow 0} \int \lbrace \frac{g_t^2}{2}\frac{\partial^2 G(x_{t'}, t'\vert x_{t}, t)}{\partial x_{t'}^2}-f_t(x_t)\frac{\partial G(x_{t'}, t'\vert x_{t}, t)}{\partial x_{t'}} \rbrace p_t(x_t) d x_t\\
+&=\int \lbrace \frac{g_t^2}{2}\frac{\partial^2 p_t(x_t)}{\partial x_{t}^2}-\frac{\partial f_t(x_t)p_t(x_t)}{\partial x_{t}} \rbrace \delta(x_{t'}- x_{t}) d x_t\\
+&=\frac{g_t^2}{2}\frac{\partial^2 p_{t'}(x_{t'})}{\partial x_{t'}^2}-\frac{\partial f_t(x_t)p_{t'}(x_{t'})}{\partial x_{t'}}
+\end{align}$$
+
+或者, 更一般地, 对于高维情况, 有 $$\frac{\partial}{\partial t}p_t(\boldsymbol{x})=-\nabla\cdot[f_t(\boldsymbol{x})p_t(\boldsymbol{x})]+\frac{g_t^2}{2}\nabla^2p_t(\boldsymbol{x})$$
+
+## ODE/SDE流模型的实现
+
+至此我们已经讨论了流模型的无限层极限, 并使用ODE/SDE刻画了这一极限. 仿照流模型, 下一步要做的事情就是找一些数据, 并找一个神经网络来拟合数据分布$p_0$和易采样分布$p_T$之间的变换关系. 一般来说, 采样从$p_0$到$p_T$的前向过程是相对简单的, 而其逆向过程则难以获得.
+
+// TODO: 写完随机过程相关就失去了写的兴趣, 有空的时候再回来写吧~
