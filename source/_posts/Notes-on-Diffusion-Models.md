@@ -17,7 +17,7 @@ mathjax: true
 
 例如, 我们有一些关于猫的图像(每张图像可以用高度乘宽度乘通道数个实数来唯一表达), 它们属于一个$\text{Width}\times\text{Height}\times\text{Channels}$维度的分布.
 
-一个小小的剧透是我们的答案将依赖于以下假设: $\lvert\lbrace X_i\rbrace\rvert$, 即样本数量足够大, 因而任何函数在这个分布上的期望都可以用这组样本来取得不错的近似: $$E_{x\sim p(x)}f(x)\simeq \frac{1}{\lvert\lbrace X_i\rbrace\rvert}\sum_i f(X_i)$$
+一个小小的提示是我们的答案将依赖于以下假设: $\lvert\lbrace X_i\rbrace\rvert$, 即样本数量足够大, 因而任何函数在这个分布上的期望都可以用这组样本来取得不错的近似: $$E_{x\sim p(x)}f(x)\simeq \frac{1}{\lvert\lbrace X_i\rbrace\rvert}\sum_i f(X_i)$$ 至于这个近似到底有多好, 在实践中我们是不关心的, 也无力去直接评估; 如果近似得不够好, 那就多加一些样本.
 
 ## 从流模型开始
 
@@ -30,7 +30,7 @@ mathjax: true
 
 ![$h$中的样本被特定的映射$f^{-1}$转换为遵从$p$分布的样本. 反之, $f$则可以将$p$分布的样本映射回$h$分布](intro.png)
 
-现代神经网络一般被看作一个参数化的函数$f_\theta(x)$, $\theta$为可学习的参数. 随着$\theta$的各种取值, $f_\theta(x)$可以很好地拟合相当广范围内的函数. 由于$p(x)$没有可用且足够简单的解析式, 则我们需要从数据中学习出一个合适的变换$f(x)=f_\theta(x)$. 为了驱使神经网络满足上面的目标, 我们可以将左右两边分布的任意散度(例如, Kullback–Leibler divergence)作为优化目标: $$\begin{aligned}\text{argmin}_\theta\ L&=-E_{x\sim p(x)} \log\frac{h(f_\theta(x))\cdot\lvert\text{det}(\frac{\partial f}{\partial x})\rvert}{p(x)}\\&=-E_{x\sim p(x)} \log h(f_\theta(x))\cdot\lvert\text{det}(\frac{\partial f}{\partial x})\rvert+\text{Const}\end{aligned}$$
+现代神经网络一般被看作一个参数化的函数$f_\theta(x)$, $\theta$为可学习的参数. 随着$\theta$的各种取值, $f_\theta(x)$可以很好地拟合相当广范围内的函数. 由于$p(x)$没有可用且足够简单的解析式, 则我们需要从数据中学习出一个合适的变换$f(x)=f_\theta(x)$. 为了驱使神经网络满足上面的目标, 我们可以将左右两边分布的任意散度(例如, Kullback–Leibler divergence)作为优化目标[^4]: $$\begin{aligned}\text{argmin}_\theta\ L&=-E_{x\sim p(x)} \log\frac{h(f_\theta(x))\cdot\lvert\text{det}(\frac{\partial f}{\partial x})\rvert}{p(x)}\\&=-E_{x\sim p(x)} \log h(f_\theta(x))\cdot\lvert\text{det}(\frac{\partial f}{\partial x})\rvert+\text{Const}\end{aligned}$$
 此处利用了KL散度$\text{KL}(p\vert\vert q)\propto E_{x\sim p(x)}\log\dfrac{q(x)}{p(x)}$的事实. 当这一散度足够小时, 两个分布的差异就足够小, 因而上面的目标就满足得足够好. 容易看出, $f_\theta(x)$的形式需要满足
 
 + 容易求逆
@@ -39,7 +39,7 @@ mathjax: true
 
 容易想象, 前面这两点往往要求$f_\theta(x)$具有简单的形式, 而这又限制了函数的表达力. 以上的样本生成框架就被称为流模型.
 
-[NICE: Non-linear Independent Components Estimation](https://arxiv.org/abs/1410.8516)这篇工作较好地实现了上面三项要求. 它使用多个堆叠的简单变换来表示$$f_\theta(x)=(f_1\circ f_2 \circ \dots)(x)$$
+以[NICE: Non-linear Independent Components Estimation](https://arxiv.org/abs/1410.8516)为典型的许多工作都较好地实现了上面三项要求. 它们往往使用多个堆叠的简单变换来表示$$f_\theta(x)=(f_1\circ f_2 \circ \dots)(x)$$
 
 ![流模型中, $h$分布被多个堆叠的映射逐步转换为$p$分布](flow.png)
 
@@ -70,7 +70,7 @@ mathjax: true
 
 一个自然的想法是, 取堆叠层数$N$无穷大的极限. 在这一极限下, 每一层均应趋近于一个恒等变换加上与$\frac{1}{N}$同阶无穷小的变换, 以保持整个变换存在极限.
 
-![当流模型的堆叠层数趋近无穷时, 样本所受的变换可以看作随时间演化](infty.png)
+![当流模型的堆叠层数趋近无穷时, 样本所受的变换可以看作随时间连续演化](infty.png)
 
 稍有物理背景的读者可能会看出, 对一个量连续施加上面所说的无穷小变换, 可以看作这个量在随着时间不停地演化.
 
@@ -145,9 +145,20 @@ $$\frac{\partial}{\partial t}p_t(\boldsymbol{x})=-\nabla\cdot[f_t(\boldsymbol{x}
 
 事实上, 对于同一个具体的F-P方程, 有一族SDE可以与它对应; 同时还有一个ODE(称作概率流 ODE)给出的概率密度对时间的偏导数与之相同; 这一ODE可以看作前面的SDE族中$g_t$项趋于$0$的结果.
 
+例如, 对于任意$\sigma_t$, 如果在我们考虑的时间范围内, 恒有 $\sigma_t^2\leq g_t^2$, 则可以将F-P方程重写为 $$\begin{aligned}
+\frac{\partial}{\partial t}p_t(\boldsymbol{x})
+&=-\nabla\cdot[f_t(\boldsymbol{x})p_t(\boldsymbol{x})]+\frac{g_t^2}{2}\nabla^2p_t(\boldsymbol{x})\\
+&=-\nabla\cdot[f_t(\boldsymbol{x})p_t(\boldsymbol{x})-\frac{1}{2}(g_t^2-\sigma_t^2)\nabla p_t(\boldsymbol{x})]+\frac{\sigma_t^2}{2}\nabla^2p_t(\boldsymbol{x})\\
+&=-\nabla\cdot\left[\left(f_t(\boldsymbol{x})-\frac{1}{2}(g_t^2-\sigma_t^2)\nabla\log p_t(\boldsymbol{x})\right)p_t(\boldsymbol{x})\right]+\frac{\sigma_t^2}{2}\nabla^2p_t(\boldsymbol{x})\\
+\end{aligned}$$
+
+因此(在已知原有的概率密度$p_t$时)$\sigma_t$诱导了一个新的SDE, 与原SDE具有相同的F-P方程, 因此也具有相同的概率密度演化方式: $$dx=\left(f_t(\boldsymbol{x})-\frac{1}{2}(g_t^2-\sigma_t^2)\nabla\log p_t(\boldsymbol{x})\right)dt+\sigma_t\varepsilon\sqrt{dt},\ \varepsilon\sim\mathcal{N}(\boldsymbol{0},\boldsymbol{I})$$
+
+在$\sigma_t=0$时得到的概率流ODE形式是显而易见的.
+
 SDE和ODE有一个显著的不同. 在时间反向流动时, ODE描述的过程可以完美地变成其逆过程: $$dx=f_t(x_t)dt, dt\lt 0$$
 
-而从一组遵从$p_T$分布的样本出发, 经由仅将$dt$反号所得的SDE演化, 则一般不能得到$p_0$分布的样本. 为了取得有意义的结果, 我们需要找到另一个SDE, 使得根据$p_T$分布取得的样本演化后能遵从$p_0$分布. 这一问题可以略微扩展一下留待下节解决.
+而从一组遵从$p_T$分布的样本出发, 经由仅将$dt$反号所得的SDE演化, 则一般不能得到$p_0$分布的样本. 为了取得有意义的结果, 我们需要找到另一个SDE, 使得根据$p_T$分布取得的样本演化后能遵从$p_0$分布. 这一问题可以利用概率流ODE得到解决, 即首先找到概率流ODE, 然后利用这一ODE的时间对称性得到逆过程的概率流ODE, 再根据逆过程的概率流ODE得到合适的逆过程SDE族.
 
 ## ODE/SDE流模型的实现
 
@@ -170,3 +181,4 @@ SDE和ODE有一个显著的不同. 在时间反向流动时, ODE描述的过程�
 [^1]:本文中直接使用某个分布的概率密度的函数名来称呼该分布.例如,h(x)中的样本可以理解为一组遵从h(x)概率密度采样得到的样本
 [^2]:考虑到单个实数的测度为0,我们就不考虑开闭区间的问题了.
 [^3]:真正的正态分布发生器不是这样工作的,这只是一个理论上可行的方案,因为这个CDF的逆没有解析式.
+[^4]:有的人喜欢说流模型的训练目标是最大化样本的对数似然.然而,描述两个分布是否接近有许多种度量,最大化对数似然只是在你使用KL散度时的等价目标;没有任何实现难度之外的理由阻止你使用JS散度之类的玩意.顺便一提,我很讨厌散度这个名字,因为它令人错误地想到矢量分析,翻译为分歧度也许会更好.
