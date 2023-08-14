@@ -30,7 +30,7 @@ mathjax: true
 
 ![$h$中的样本被特定的映射$f^{-1}$转换为遵从$p$分布的样本. 反之, $f$则可以将$p$分布的样本映射回$h$分布](intro.png)
 
-现代神经网络一般被看作一个参数化的函数$f_\theta(x)$, $\theta$为可学习的参数. 随着$\theta$的各种取值, $f_\theta(x)$可以很好地拟合相当广范围内的函数. 由于$p(x)$没有可用且足够简单的解析式, 则我们需要从数据中学习出一个合适的变换$f(x)=f_\theta(x)$. 为了驱使神经网络满足上面的目标, 我们可以将左右两边分布的任意散度(例如, Kullback–Leibler divergence)作为优化目标[^4]: $$\begin{aligned}\text{argmin}_\theta\ L&=-E_{x\sim p(x)} \log\frac{h(f_\theta(x))\cdot\lvert\text{det}(\frac{\partial f}{\partial x})\rvert}{p(x)}\\&=-E_{x\sim p(x)} \log h(f_\theta(x))\cdot\lvert\text{det}(\frac{\partial f}{\partial x})\rvert+\text{Const}\end{aligned}$$
+现代神经网络一般被看作一个参数化的函数$f_\theta(x)$, $\theta$为可学习的参数. 随着$\theta$的各种取值, $f_\theta(x)$可以很好地拟合相当广范围内的函数. 由于$p(x)$没有可用且足够简单的解析式, 则我们需要从数据中学习出一个合适的变换$f(x)=f_\theta(x)$. 为了驱使神经网络满足上面的目标, 我们可以将左右两边分布的任意散度(例如, Kullback–Leibler divergence)作为优化目标 [^4] : $$\begin{aligned}\text{argmin}_\theta\ L&=-E_{x\sim p(x)} \log\frac{h(f_\theta(x))\cdot\lvert\text{det}(\frac{\partial f}{\partial x})\rvert}{p(x)}\\&=-E_{x\sim p(x)} \log h(f_\theta(x))\cdot\lvert\text{det}(\frac{\partial f}{\partial x})\rvert+\text{Const}\end{aligned}$$
 此处利用了KL散度$\text{KL}(p\vert\vert q)\propto E_{x\sim p(x)}\log\dfrac{q(x)}{p(x)}$的事实. 当这一散度足够小时, 两个分布的差异就足够小, 因而上面的目标就满足得足够好. 容易看出, $f_\theta(x)$的形式需要满足
 
 + 容易求逆
@@ -90,6 +90,8 @@ $$\begin{align}x \rightarrow \dots \rightarrow x_t \rightarrow x_{t+\Delta t} \r
 
 然而, 这一性质在我们的目的中其实并不需要满足. 流管内外的样本完全可以随机交换, 只要从统计上说流管的流量是守恒的即可. 换句话说, 前面的ODE只需要负责描述概率密度的"流动", 而无需对单个样本的采样过程负责. 因此前述的ODE可以进一步扩展为SDE来描述具体样本的采样过程, 加上一个随机项, 写为$$dx_t=f_t(x_t)dt+g_t\varepsilon\sqrt{dt},\ \varepsilon\sim\mathcal{N}(\boldsymbol{0},\boldsymbol{I})$$
 
+### Fokker-Planck 方程
+
 在给定单样本演化所遵从的以上SDE时, 我们也可以写出其概率密度所要遵从的方程, 即所谓 Fokker-Planck 方程:
 
 {% spoiler Fokker-Planck 方程的推导细节 %}
@@ -143,22 +145,42 @@ $$\frac{\partial}{\partial t}p_t(\boldsymbol{x})=-\nabla\cdot[f_t(\boldsymbol{x}
 
 可以看出, 上式右边的第一项表示在 $f_t$ 这个"流"的驱动下, 因为其散度不为 $0$ 导致的密度累积; 右边第二项则描述了随机运动导致的密度平滑(如果一点处的概率密度比相邻点更低, 则相邻点的概率密度会来填补这个"谷").
 
+### 概率流ODE
+
 事实上, 对于同一个具体的F-P方程, 有一族SDE可以与它对应; 同时还有一个ODE(称作概率流 ODE)给出的概率密度对时间的偏导数与之相同; 这一ODE可以看作前面的SDE族中$g_t$项趋于$0$的结果.
 
 例如, 对于任意$\sigma_t$, 如果在我们考虑的时间范围内, 恒有 $\sigma_t^2\leq g_t^2$, 则可以将F-P方程重写为 $$\begin{aligned}
 \frac{\partial}{\partial t}p_t(\boldsymbol{x})
 &=-\nabla\cdot[f_t(\boldsymbol{x})p_t(\boldsymbol{x})]+\frac{g_t^2}{2}\nabla^2p_t(\boldsymbol{x})\\
 &=-\nabla\cdot[f_t(\boldsymbol{x})p_t(\boldsymbol{x})-\frac{1}{2}(g_t^2-\sigma_t^2)\nabla p_t(\boldsymbol{x})]+\frac{\sigma_t^2}{2}\nabla^2p_t(\boldsymbol{x})\\
-&=-\nabla\cdot\left[\left(f_t(\boldsymbol{x})-\frac{1}{2}(g_t^2-\sigma_t^2)\nabla\log p_t(\boldsymbol{x})\right)p_t(\boldsymbol{x})\right]+\frac{\sigma_t^2}{2}\nabla^2p_t(\boldsymbol{x})\\
+&=-\nabla\cdot\left\{\left[f_t(\boldsymbol{x})-\frac{1}{2}(g_t^2-\sigma_t^2)\nabla\log p_t(\boldsymbol{x})\right]p_t(\boldsymbol{x})\right\}+\frac{\sigma_t^2}{2}\nabla^2p_t(\boldsymbol{x})\\
 \end{aligned}$$
 
-因此(在已知原有的概率密度$p_t$时)$\sigma_t$诱导了一个新的SDE, 与原SDE具有相同的F-P方程, 因此也具有相同的概率密度演化方式: $$dx=\left(f_t(\boldsymbol{x})-\frac{1}{2}(g_t^2-\sigma_t^2)\nabla\log p_t(\boldsymbol{x})\right)dt+\sigma_t\varepsilon\sqrt{dt},\ \varepsilon\sim\mathcal{N}(\boldsymbol{0},\boldsymbol{I})$$
+因此(在已知原有的概率密度$p_t$时)$\sigma_t$诱导了一个新的SDE, 与原SDE具有相同的F-P方程, 因此也具有相同的概率密度演化方式: $$d\boldsymbol{x_t}=\left[f_t(\boldsymbol{x})-\frac{1}{2}(g_t^2-\sigma_t^2)\nabla\log p_t(\boldsymbol{x})\right]dt+\sigma_t\varepsilon\sqrt{dt},\ \varepsilon\sim\mathcal{N}(\boldsymbol{0},\boldsymbol{I})$$
 
-在$\sigma_t=0$时得到的概率流ODE形式是显而易见的.
+在$\sigma_t=0$时得到的概率流ODE形式是显而易见的: $$d\boldsymbol{x}=\left[f_t(\boldsymbol{x})-\frac{1}{2}g_t^2\nabla\log p_t(\boldsymbol{x})\right]dt$$
+<!-- 不难验证, 由概率流ODE导出的概率密度的随动导数是$0$, 这意味着这一ODE演化等价的变换的雅可比行列式为$1$, 从而无需在训练中考虑. -->
+
+{% spoiler 概率流ODE中概率密度的随动导数的计算 %}
+$$\begin{aligned}
+\frac{Dp_t(\boldsymbol{x_t})}{dt}
+&=\frac{\partial p_t(x)}{\partial t}\vert_{x=\boldsymbol{x_t}}+\frac{d\boldsymbol{x_t}}{dt}\cdot\nabla p_t(\boldsymbol{x_t})\\
+&=-\nabla\cdot\left\{\left[f_t(\boldsymbol{x_t})-\frac{1}{2}g_t^2\nabla\log p_t(\boldsymbol{x_t})\right]p_t(\boldsymbol{x_t})\right\}+\left(f_t(\boldsymbol{x_t})-\frac{1}{2}g_t^2\nabla\log p_t(\boldsymbol{x_t})\right)\cdot\nabla p_t(\boldsymbol{x_t})\\
+&=-\nabla\cdot\left[f_t(\boldsymbol{x_t})-\frac{1}{2}g_t^2\nabla\log p_t(\boldsymbol{x_t})\right]p_t(\boldsymbol{x_t})
+\end{aligned}$$
+{% endspoiler %}
+
+### SDE的逆过程
 
 SDE和ODE有一个显著的不同. 在时间反向流动时, ODE描述的过程可以完美地变成其逆过程: $$dx=f_t(x_t)dt, dt\lt 0$$
 
 而从一组遵从$p_T$分布的样本出发, 经由仅将$dt$反号所得的SDE演化, 则一般不能得到$p_0$分布的样本. 为了取得有意义的结果, 我们需要找到另一个SDE, 使得根据$p_T$分布取得的样本演化后能遵从$p_0$分布. 这一问题可以利用概率流ODE得到解决, 即首先找到概率流ODE, 然后利用这一ODE的时间对称性得到逆过程的概率流ODE, 再根据逆过程的概率流ODE得到合适的逆过程SDE族.
+
+具体来说, 考虑 $$d\boldsymbol{x}=\left[f_\tau(\boldsymbol{x})-g_\tau^2\nabla\log p_\tau(\boldsymbol{x})\right]d\tau+g_\tau\varepsilon\sqrt{\lvert d\tau\rvert},\ \varepsilon\sim\mathcal{N}(\boldsymbol{0},\boldsymbol{I}),\ d\tau\lt 0$$
+
+不难发现, 其对应的概率流ODE正好是 $$d\boldsymbol{x}=\left[f_\tau(\boldsymbol{x})-g_\tau^2\nabla\log p_\tau(\boldsymbol{x})\right]d\tau-\frac{1}{2}g_\tau^2\nabla\log p_\tau(\boldsymbol{x})\lvert d\tau\rvert$$
+
+因此可以知道, 这一过程正是SDE的逆过程.
 
 ## ODE/SDE流模型的实现
 
@@ -168,17 +190,21 @@ SDE和ODE有一个显著的不同. 在时间反向流动时, ODE描述的过程�
 
 对于前一步, 我们可以比较轻易地写出ODE/SDE来实现这一变换.
 
+### ODE流模型示例: PFGM
+
 对于ODE而言, [Poisson Flow Generative Models](https://arxiv.org/abs/2209.11178)就是一个良好的例子. 考虑在样本所在的空间上再加一维$z$. 将所有样本点$x$放置在$[x, 0]$的位置上, 并将其看作是$N+1$维中的电荷, 发射出电场线直到无穷远处. 则这一空间中的电场就是一个完美的无散无旋场. 考虑到任何有限大小的电荷分布在足够远处都等效于一个点电荷, 足够远处的电场线密度必然是球对称而均匀的; 只需在无穷远的球壳上均匀采样一个样本点, 逆着电场线的方向运动到$z=0$处就可以得到$p_0$中的一个样本; 这一运动即为所需的ODE. 为了加速场的计算, 可令神经网络直接学习所得的向量场, 即学习ODE中$f_t(x_t)$项本身.
 
 ![PFGM的二维示例. 二维分布被看作三维空间中的电荷, 构建了三维球壳这个二维流形上的均匀分布和原分布的映射关系](PFGM.png)
 
+### SDE流模型示例: DDPM
+
 对于SDE而言, 只需要让样本的演化等价于$p_0$和$p_T$逐步"混合", 就可以得到满足要求的变换. 例如, 令 $$x_{t+\Delta t}=\sqrt{1-\beta_t^2\Delta t} x_t + \beta_t\varepsilon \sqrt{\Delta t},\ \varepsilon\sim\mathcal{N}(\boldsymbol{0},\boldsymbol{I})$$ 时, 在$t\rightarrow\infty$时, $x_\infty\sim\mathcal{N}(\boldsymbol{0},\boldsymbol{I})$
 
-此时, 正向过程的SDE形式完全不包含和具体样本相关的信息, 问题的全部难度在于SDE的"逆过程"的实现. 这一逆过程不是唯一的, 只需要其每一时刻的样本分布密度
+此时, 正向过程的SDE形式完全不包含和具体样本相关的信息, 同一个SDE可以保证任何$p_0$被变换到$p_T$, 问题的全部难度在于SDE的"逆过程"的实现. 从上节的结果可以知道, $\nabla\log p_t(\boldsymbol{x})$含有对逆过程至关重要的信息. 因此, 我们可以使用一个神经网络来拟合这一项. 为了利用上样本数据, 这一项需要被写成某个东西在$p_0$上的期望的形式来求值.
 
 // TODO: 写完随机过程相关就失去了写的兴趣, 有空的时候再回来写吧~
 
 [^1]:本文中直接使用某个分布的概率密度的函数名来称呼该分布.例如,h(x)中的样本可以理解为一组遵从h(x)概率密度采样得到的样本
 [^2]:考虑到单个实数的测度为0,我们就不考虑开闭区间的问题了.
 [^3]:真正的正态分布发生器不是这样工作的,这只是一个理论上可行的方案,因为这个CDF的逆没有解析式.
-[^4]:有的人喜欢说流模型的训练目标是最大化样本的对数似然.然而,描述两个分布是否接近有许多种度量,最大化对数似然只是在你使用KL散度时的等价目标;没有任何实现难度之外的理由阻止你使用JS散度之类的玩意.顺便一提,我很讨厌散度这个名字,因为它令人错误地想到矢量分析,翻译为分歧度也许会更好.
+[^4]:有的人喜欢说流模型的训练目标是最大化样本的对数似然.然而,描述两个分布是否接近有许多种度量,最大化对数似然只是在你使用KL散度时的等价目标;没有任何实现难度之外的理由阻止你使用JS散度之类的玩意,此时的目标函数自然不等价于对数似然.顺便一提,我很讨厌散度这个名字,因为它令人错误地想到矢量分析,翻译为分歧度也许会更好.
