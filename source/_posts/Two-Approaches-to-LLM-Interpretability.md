@@ -73,7 +73,7 @@ Today, the team leader responsible for conducting nucleic acid tests died, so I 
 
 这些研究的确可以提供一些有意义的看法. 例如, 通过分析这些回路, 我们可以知道模型在哪些情况下具有泛化能力, 哪些情况下只是记住了训练集. 所谓[逆转诅咒](https://arxiv.org/abs/2309.12288)(Reversal Curse)现象声称, LLM 的训练集中如果只包含 "Beijing is the capital of China", 则 LLM 一般不能自动地泛化得出 "The capital of China is Beijing". 在机械可解释性的眼光下, 学到 "A is B" 只是在 MLP 层中构造了一个查找表, MLP("A is")="B"; 这一查找表自然不会是天然就可逆的(除非在训练集中也见过逆关系), 也不会让 LLM 自动学会 "B is A".
 
-在提供唯象学以外的认识之外, 机械可解释性方法也有其内在的局限.
+在提供唯象学以外的认识之外, 机械可解释性方法也有其内在的局限.(Q: 我们能通过阅读JVM的源码来预测任何一个java程序的行为吗?)
 
 + 回路的挖掘和解释往往严重依赖于人工, 自动化的方法还不足以提供很好的结果.
 + 回路挖掘的结果只能用于解释较简单的行为.
@@ -83,7 +83,9 @@ Today, the team leader responsible for conducting nucleic acid tests died, so I 
 
 认知科学中相反的 Hopfieldian view: 认知是表征空间的结果, 在物质上说, 神经元的活动情况就是表征.
 
-相比于 MI, 这一观点并不关心 LLM 中的输入到表征的映射是如何实现的, 也不关心表征到模型行为的影响是如何产生的; 相反, 它关心表征本身的语义以及干涉表征对模型行为造成的影响本身. 例如, Burns等人（2022）在 LLM 中确定了真实性(truthfulness)的表征, 证明即使输出错误信息, 模型通常也知道正确答案. 相关的发现无疑可以用于直接提升模型的准确率, 而无需构建新的数据集或对模型重新训练.
+相比于 MI, 这一观点并不关心 LLM 中的输入到表征的映射是如何实现的, 也不关心表征到模型行为的影响是如何产生的; 相反, 它关心表征本身的语义以及干涉表征对模型行为造成的影响本身. 例如, Burns等人（2022）在 LLM 中确定了真实性(truthfulness)的表征, 证明在不少情况下, 即使输出错误信息, 模型也知道正确答案. 相关的发现无疑可以用于直接提升模型的准确率, 而无需构建新的数据集或对模型重新训练.
+
+这一观点可以类比为物理学中的简正模: 一组耦合的谐振子无疑是难以分析的, 但可以使用它们的坐标的线性组合来合成一组新的变量(简正模, 模 for 模式); 新的变量可以具有互相独立(因而更加简单)的运动规律. 而单个谐振子的运动同样可以被视作各模式单独存在时的运动情况的叠加.
 
 在自顶向下的可解释性框架上, 可以进行多种层级的实验.
 
@@ -92,7 +94,7 @@ Today, the team leader responsible for conducting nucleic acid tests died, so I 
 3. 消融实验. 如果某表征对 LLM 行为是*必要的*, 消除之将导致 LLM 的退化, 才能说该表征与 LLM 行为具有完整的因果关系.
 4. 恢复实验. 如果某概念被完全移除, 而同时引入对应的表征, 则可以预计 LLM 将重新具有该概念对应的行为. 这就能说明该表征对于 LLM 的特定行为是充分的.
 
-[Representation Engineering: A Top-Down Approach to AI Transparancy](https://arxiv.org/abs/2310.01405) 总结了这一方向上的工作, 并提供了一组baseline方法. 该方法称为 Linear Artificial Tomography(LAT).
+RepE, 即 [Representation Engineering: A Top-Down Approach to AI Transparancy](https://arxiv.org/abs/2310.01405) 总结了这一方向上的工作. 相应于实验层级 1, 该工作提供了 baseline 方法, 称为 Linear Artificial Tomography(LAT).
 
 {% spoiler Linear Artificial Tomography %}
 
@@ -136,7 +138,63 @@ The amount of happiness in the scenario is <?>
 相应于层级 2 的实验, 从 LAT 导出的 reading vector 可以作为 LLM 行为的操控方法的基准. 进一步地, 可以提出具有更好性能的 LoRRA (Low-Rank Representation Adaption) 模型操纵方法. 可以预期, 基于可解释性的模型操纵方法相比"将有关的操纵数据放入数据集微调模型"的范式有潜在的优越性. 首先, 这样的方法具有更高的精确度上限, 能只影响 LLM 的小部分行为; 其次, 能更为有效而完整地处理模型的行为; 常规的微调有灾难性遗忘的问题, 而这样的方法能通过仅影响模型表征中的少数维度(理想情况下), 来缓解这一问题.
 
 {% spoiler Low-Rank Representation Adaption %}
-// TODO
+
+首先定义所谓 contrast vector. constrast vector 是两组相对比的提示导致的表征的差.
+
+在取得 constrast vector 后, 为了操控模型的行为, 可以使用常规的 LoRA 微调方法. 具体来说, 从模型的最浅层开始, 计算目标表征, 即使用 constrast vector 或 reading vector 对原表征的某种操作(见下文). 损失函数则为每层目标表征与模型实际产生的表征之间的 $L^2$ 范数的和.
+
+完成微调后, LoRA 方法将提供一组低秩的参数增量.
+
 {% endspoiler %}
 
-// TODO
+在得到 reading vector/constrast vector 后(统一记为 $v$), 可以施行多种操作. 这些操作可以在 LoRRA 方法中产生目标表征. 操作的强度调节可以通过根据超参数放大或缩小 $v$ 来实现.
+
+1. 直接将增量添加在模型表征上: $R\rightarrow R\pm v$. 这类似于施加刺激或抑制.
+2. 分段操作: $R\rightarrow R + \text{sign}(R\cdot v)v$. 即, 增加表征在$v$方向上的绝对强度.
+3. 投影操作: $R\rightarrow R - \frac{R\cdot v}{v^2}v$. 即, 完全消除表征在$v$方向上的分量.
+
+第 3 和第 4 层级的实验主要用于说明所寻找到的表征与 LLM 行为有着充分且必要的关系.
+
+### Example: Honesty
+
+正确(truthfulness)的定义是模型的响应与事实一致. 诚实(honesty)的定义是模型的响应与模型内在的信念一致(即使模型的响应并不正确). RepE 的作者进行了如下实验设置: 考虑提示模板
+
+```plaintext
+USER: Pretend you're an {honest/untruthful} person making statements about the world. ASSISTANT: <statement>
+```
+
+其中, `<statement>` 是诸如 `The Earth's atmosphere protects us from harm` 之类的正确陈述. `{honest/untruthful}` 则分别提示模型进行诚实或不诚实的输出.
+
+作者在构造提示后, 运行模型, 得到 PCA 方法所用的数据集; 通过利用数据集所对应的标签, 可以校正 PCA 方法导出的最大主成分, 即 reading vector 的正方向. 为了验证方法的正确性, 可以在测试集上取得`<statement>`部分某个 token 上的模型的表征, 并利用表征在 PCA 方法所得最大主成分方向上投影的符号来判定模型是否被要求说谎. 这一判定的正确率可以接近 1 (通过利用模型中间层提取的表征).
+
+![收集模型响应的示意图. 相同刺激不同指令的提示对应token之间的差被用作PCA方法的输入](representation_collection.svg)
+
+![对模型诚实度的可视化. 考虑到方法的输入是逐 token 采样的, 可以实现 token 级别的诚实度检测](lie.png)
+
+### Example: Fact Editing
+
+LLM 领域的可解释性的鼻祖之作之一是[Locating and Editing Factual Associations in GPT](https://rome.baulab.info/). 该工作提出了 Rank-One Model Editing (ROME) 方法, 将 LLM 的 FFN 层看作一个键值存储库, 即它将来自前一层的输入看作一个键, 寻找出存储库中最接近的键, 并输出对应的值; 随后通过修改该最接近的键所代表的值对应的 FFN 层权重, 来实现对模型中存储的事实的修改. 例如, 它可以让模型在本该输出 `Eiffel Tower is in Paris, France` 的情况下输出 `Eiffel Tower is in Rome, Italy`. 这一工作通过批量损坏网络状态-逐个恢复网络状态来定位关键权重背后的基本方法论仍然被可解释性领域广泛采用. 然而, 该工作的结果远非完美, 也受到了诸多批评. 例如,
+
++ 该方法不是双向的(Q: 这和逆转诅咒有什么联系?), 即对 `Eiffel Tower is located in ____` 生效的修改不会导致 `Rome has a tower called the ____` 也同步被修改.
++ 该方法更多的是修改 token 到概念的关联, 而非概念本身. 对于一对同义词中一者的改动不会影响到另一者.
++ 如果在模型修改后没有提及被涉及的 token, 则修改不会生效. 必须直接提及该 token 来"激活"修改.
++ 该方法会导致意想不到的副作用, 例如编辑后, 提示中提及 Eiffel Tower 时, 模型会更多地谈论 Rome.
++ 该方法会导致其它无关的事实也被修改. 例如模型会认为卢浮宫也在罗马.
+
+无论如何, 把埃菲尔塔搬到罗马已经成为了可解释性与模型编辑领域的 MNIST. 遵照 RepE 的一般思想, 作者首先要求模型生成一组与 `Eiffel Tower is in Paris` 这一事实有关的陈述作为对照组. 随后, 在生成的陈述中将 `Paris` 替换为 `Rome`, 得到实验组. 对于这两组数据, 作者在关键 token `Pairs/Rome` 的位置上收集模型响应, 得到 reading vector. 为了对模型进行实际的修改, 作者选择将 reading vector 与模型的原始表征进行线性组合. 相比 ROME 方法的缺陷, RepE 方法所得的结果有所改善.
+
+![左: 模型正确地回答了修改后的事实结果, 这一修改能影响后续的模型推理. 右: 模型提及某概念的倾向也能被控制](rome.png)
+
+### Example: Memorization
+
+*在回忆事实和胡编乱造之间控制模型是一个不用努力想都知道有意义的应用.* -- 鲁迅
+
+遵照前文, 读者想必已经能领会到 RepE 实验的一般流程了. 在本实验中, 作者采用真正的名人名言和让 GPT-4 合成的名言/真正的文献(书籍, 诗歌)的开头和合成的开头作为实验组和对照组; 所得的 reading vector 就表示了控制模型精确回忆 token 序列和模仿性生成 token 序列的表征的区别, 可以用来降低模型回忆 token 序列的倾向. 实验结果见下图. 考虑到 ROME 的前车之鉴, 作者还以一组众所周知的历史事件作为评估集. 结果表明, 回忆抑制操作仅降低历史事件数据集上 1% 的准确率(97.2%->96.2%). 这说明所得的 reading vector 确实准确调控了模型的死记硬背行为, 而没有伤及模型的知识能力.
+
+![在使用随机方向而不是所得 reading vector 的方向来控制模型, 或在增强模型回忆倾向的方向控制模型, 均不显著改变模型输出结果与原始 token 序列之间的完全匹配率(Exact Match, EM)和嵌入向量相似度(Embedding Similarity, SIM); 在减弱模型回忆倾向的方向控制模型, 则能使前两个指标大幅下降](quote.png)
+
+## 总结与展望
+
+RepE 方法毫无疑问取得了有意义的进展. 然而, 值得注意的是, 其成功的基本条件在于, LLM 在预训练中自发涌现出的表征具有稀疏线性结构(Q: Why?[^1]), 使得简单的基线方法就能取得良好的效果.
+
+[^1]: 也许和[这里](https://zhuanlan.zhihu.com/p/635860634)有点关系?
