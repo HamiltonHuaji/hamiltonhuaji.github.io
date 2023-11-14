@@ -193,8 +193,135 @@ LLM 领域的可解释性的鼻祖之作之一是[Locating and Editing Factual A
 
 ![在使用随机方向而不是所得 reading vector 的方向来控制模型, 或在增强模型回忆倾向的方向控制模型, 均不显著改变模型输出结果与原始 token 序列之间的完全匹配率(Exact Match, EM)和嵌入向量相似度(Embedding Similarity, SIM); 在减弱模型回忆倾向的方向控制模型, 则能使前两个指标大幅下降](quote.png)
 
-## 总结与展望
+## Summary and Outlook
 
 RepE 方法毫无疑问取得了有意义的进展. 然而, 值得注意的是, 其成功的基本条件在于, LLM 在预训练中自发涌现出的表征具有稀疏线性结构(Q: Why?[^1]), 使得简单的基线方法就能取得良好的效果.
 
-[^1]: 也许和[这里](https://zhuanlan.zhihu.com/p/635860634)有点关系?
+// TODO
+
+<!-- ```DOT
+digraph {
+    node [shape = record;];
+    splines = false;
+    rankdir=LR
+    subgraph Honest {
+        honest_prompt [label = "Honest Prompt|...Pretend you're an |<instruct>honest| <mid>person ... ASSISTANT: |<token1>The |<token2>Earth's |<token3>atmosphere |<token4>protects |<token5>us |<token6>from |<token7>harm";];
+        honest_layer_n [label = "layer n|...Pretend you're an |<instruct>honest| <mid>person ... ASSISTANT: |<token1>The |<token2>Earth's |<token3>atmosphere |<token4>protects |<token5>us |<token6>from |<token7>harm";];
+        honest_layer_m [label = "layer m|...Pretend you're an |<instruct>honest| <mid>person ... ASSISTANT: |<token1>The |<token2>Earth's |<token3>atmosphere |<token4>protects |<token5>us |<token6>from |<token7>harm";];
+        
+        honest_prompt:instruct -> honest_layer_n:instruct -> honest_layer_m:instruct;
+        honest_prompt:mid -> honest_layer_n:mid -> honest_layer_m:mid;
+        honest_prompt:token1 -> honest_layer_n:token1 -> honest_layer_m:token1;
+        honest_prompt:token2 -> honest_layer_n:token2 -> honest_layer_m:token2;
+        honest_prompt:token3 -> honest_layer_n:token3 -> honest_layer_m:token3;
+        honest_prompt:token4 -> honest_layer_n:token4 -> honest_layer_m:token4;
+        honest_prompt:token5 -> honest_layer_n:token5 -> honest_layer_m:token5;
+        honest_prompt:token6 -> honest_layer_n:token6 -> honest_layer_m:token6;
+        honest_prompt:token7 -> honest_layer_n:token7 -> honest_layer_m:token7;
+        
+        honest_prompt:instruct -> honest_layer_n:token1 [constraint = false;];
+        honest_prompt:instruct -> honest_layer_n:token2 [constraint = false;];
+        honest_prompt:instruct -> honest_layer_n:token3 [constraint = false;];
+        honest_prompt:instruct -> honest_layer_n:token4 [constraint = false;];
+        honest_prompt:instruct -> honest_layer_n:token5 [constraint = false;];
+        honest_prompt:instruct -> honest_layer_n:token6 [constraint = false;];
+        honest_prompt:instruct -> honest_layer_n:token7 [constraint = false;];
+        
+        honest_layer_n:instruct -> honest_layer_m:token1 [constraint = false;];
+        honest_layer_n:instruct -> honest_layer_m:token2 [constraint = false;];
+        honest_layer_n:instruct -> honest_layer_m:token3 [constraint = false;];
+        honest_layer_n:instruct -> honest_layer_m:token4 [constraint = false;];
+        honest_layer_n:instruct -> honest_layer_m:token5 [constraint = false;];
+        honest_layer_n:instruct -> honest_layer_m:token6 [constraint = false;];
+        honest_layer_n:instruct -> honest_layer_m:token7 [constraint = false;];
+        
+        honest_prediction [label = "Model Prediction:|<token1>The |<token2>Earth's |<token3>atomsphere |<token4>protects...";];
+        honest_layer_m:token1 -> honest_prediction:token1 [style = invis;];
+        honest_layer_m:token1 -> honest_prediction:token2 [constraint = false;];
+        honest_layer_m:token2 -> honest_prediction:token3 [constraint = false;];
+        honest_layer_m:token3 -> honest_prediction:token4 [constraint = false;];
+        
+        honest_layer_n_gather [label = "gathered layer n outputs";];
+        honest_layer_m_gather [label = "gathered layer m outputs";];
+        honest_layer_n:token1 -> honest_layer_n_gather [constraint = false;];
+        honest_layer_n:token2 -> honest_layer_n_gather [constraint = false;];
+        honest_layer_n:token3 -> honest_layer_n_gather [constraint = false;];
+        honest_layer_n:token4 -> honest_layer_n_gather [constraint = false;];
+        honest_layer_n:token5 -> honest_layer_n_gather [constraint = false;];
+        honest_layer_n:token6 -> honest_layer_n_gather [constraint = false;];
+        honest_layer_n:token7 -> honest_layer_n_gather [constraint = true;];
+        
+        honest_layer_m:token1 -> honest_layer_m_gather [constraint = false;];
+        honest_layer_m:token2 -> honest_layer_m_gather [constraint = false;];
+        honest_layer_m:token3 -> honest_layer_m_gather [constraint = false;];
+        honest_layer_m:token4 -> honest_layer_m_gather [constraint = false;];
+        honest_layer_m:token5 -> honest_layer_m_gather [constraint = false;];
+        honest_layer_m:token6 -> honest_layer_m_gather [constraint = false;];
+        honest_layer_m:token7 -> honest_layer_m_gather [constraint = true;];
+    }
+    
+    subgraph Untruthful {
+        untruthful_prompt [label = "Untruthful Prompt|...Pretend you're an |<instruct>untruthful| <mid>person ... ASSISTANT: |<token1>The |<token2>Earth's |<token3>atmosphere |<token4>protects |<token5>us |<token6>from |<token7>harm";];
+        untruthful_layer_n [label = "layer n|...Pretend you're an |<instruct>untruthful| <mid>person ... ASSISTANT: |<token1>The |<token2>Earth's |<token3>atmosphere |<token4>protects |<token5>us |<token6>from |<token7>harm";];
+        untruthful_layer_m [label = "layer m|...Pretend you're an |<instruct>untruthful| <mid>person ... ASSISTANT: |<token1>The |<token2>Earth's |<token3>atmosphere |<token4>protects |<token5>us |<token6>from |<token7>harm";];
+        
+        untruthful_prompt:instruct -> untruthful_layer_n:instruct -> untruthful_layer_m:instruct;
+        untruthful_prompt:mid -> untruthful_layer_n:mid -> untruthful_layer_m:mid;
+        untruthful_prompt:token1 -> untruthful_layer_n:token1 -> untruthful_layer_m:token1;
+        untruthful_prompt:token2 -> untruthful_layer_n:token2 -> untruthful_layer_m:token2;
+        untruthful_prompt:token3 -> untruthful_layer_n:token3 -> untruthful_layer_m:token3;
+        untruthful_prompt:token4 -> untruthful_layer_n:token4 -> untruthful_layer_m:token4;
+        untruthful_prompt:token5 -> untruthful_layer_n:token5 -> untruthful_layer_m:token5;
+        untruthful_prompt:token6 -> untruthful_layer_n:token6 -> untruthful_layer_m:token6;
+        untruthful_prompt:token7 -> untruthful_layer_n:token7 -> untruthful_layer_m:token7;
+        
+        untruthful_prompt:instruct -> untruthful_layer_n:token1 [constraint = false;];
+        untruthful_prompt:instruct -> untruthful_layer_n:token2 [constraint = false;];
+        untruthful_prompt:instruct -> untruthful_layer_n:token3 [constraint = false;];
+        untruthful_prompt:instruct -> untruthful_layer_n:token4 [constraint = false;];
+        untruthful_prompt:instruct -> untruthful_layer_n:token5 [constraint = false;];
+        untruthful_prompt:instruct -> untruthful_layer_n:token6 [constraint = false;];
+        untruthful_prompt:instruct -> untruthful_layer_n:token7 [constraint = false;];
+        
+        untruthful_layer_n:instruct -> untruthful_layer_m:token1 [constraint = false;];
+        untruthful_layer_n:instruct -> untruthful_layer_m:token2 [constraint = false;];
+        untruthful_layer_n:instruct -> untruthful_layer_m:token3 [constraint = false;];
+        untruthful_layer_n:instruct -> untruthful_layer_m:token4 [constraint = false;];
+        untruthful_layer_n:instruct -> untruthful_layer_m:token5 [constraint = false;];
+        untruthful_layer_n:instruct -> untruthful_layer_m:token6 [constraint = false;];
+        untruthful_layer_n:instruct -> untruthful_layer_m:token7 [constraint = false;];
+        
+        untruthful_prediction [label = "Model Prediction:|<token1>The |<token2>Earth's |<token3>atomsphere |<token4>harms...";];
+        untruthful_layer_m:token1 -> untruthful_prediction:token1 [style = invis;];
+        untruthful_layer_m:token1 -> untruthful_prediction:token2 [constraint = false;];
+        untruthful_layer_m:token2 -> untruthful_prediction:token3 [constraint = false;];
+        untruthful_layer_m:token3 -> untruthful_prediction:token4 [constraint = false;];
+        
+        untruthful_layer_n_gather [label = "gathered layer n outputs";];
+        untruthful_layer_m_gather [label = "gathered layer m outputs";];
+        untruthful_layer_n:token1 -> untruthful_layer_n_gather [constraint = false;];
+        untruthful_layer_n:token2 -> untruthful_layer_n_gather [constraint = false;];
+        untruthful_layer_n:token3 -> untruthful_layer_n_gather [constraint = false;];
+        untruthful_layer_n:token4 -> untruthful_layer_n_gather [constraint = false;];
+        untruthful_layer_n:token5 -> untruthful_layer_n_gather [constraint = false;];
+        untruthful_layer_n:token6 -> untruthful_layer_n_gather [constraint = false;];
+        untruthful_layer_n:token7 -> untruthful_layer_n_gather [constraint = true;];
+        
+        untruthful_layer_m:token1 -> untruthful_layer_m_gather [constraint = false;];
+        untruthful_layer_m:token2 -> untruthful_layer_m_gather [constraint = false;];
+        untruthful_layer_m:token3 -> untruthful_layer_m_gather [constraint = false;];
+        untruthful_layer_m:token4 -> untruthful_layer_m_gather [constraint = false;];
+        untruthful_layer_m:token5 -> untruthful_layer_m_gather [constraint = false;];
+        untruthful_layer_m:token6 -> untruthful_layer_m_gather [constraint = false;];
+        untruthful_layer_m:token7 -> untruthful_layer_m_gather [constraint = true;];
+    }
+    diff_layer_n_gather [style=bold; label="difference between representation with\n same stimulus and different instructions at layer n"];
+    diff_layer_m_gather [style=bold; label="difference between representation with\n same stimulus and different instructions at layer m"];
+    untruthful_layer_n_gather -> diff_layer_n_gather [constraint = false;];
+    honest_layer_n_gather -> diff_layer_n_gather [constraint = false;];
+    untruthful_layer_m_gather -> diff_layer_m_gather [constraint = false;];
+    honest_layer_m_gather -> diff_layer_m_gather [constraint = false;];
+}
+``` -->
+
+[^1]: 也许和[这里](https://zhuanlan.zhihu.com/p/635860634)有点关系?以及[这里](https://arxiv.org/abs/2311.03658)
