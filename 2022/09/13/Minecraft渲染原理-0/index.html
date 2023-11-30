@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css" integrity="sha256-/4UQcSmErDzPCMAiuOiWPVVsNN2s3ZY/NsmXNcj0IFc=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"hamiltonhuaji.github.io","root":"/","images":"/images","scheme":"Mist","darkmode":false,"version":"8.15.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":null,"show_result":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="首先简单介绍一下 Minecraft 源码的获取方式. fabric 开发环境包含了反混淆 Minecraft 源码的工具, 因此最简单的方法是克隆一个 fabric mod 的仓库, 然后调用里面的工具. 考虑到我们的目的是修改 VulkanMod, 不妨直接 git clone https:&#x2F;&#x2F;github.com&#x2F;xCollateral&#x2F;VulkanMod.git (或克隆 fabric-e">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Minecraft渲染原理(0)">
+<meta property="og:url" content="https://hamiltonhuaji.github.io/2022/09/13/Minecraft%E6%B8%B2%E6%9F%93%E5%8E%9F%E7%90%86-0/index.html">
+<meta property="og:site_name" content="Ad Astra per Aspera">
+<meta property="og:description" content="首先简单介绍一下 Minecraft 源码的获取方式. fabric 开发环境包含了反混淆 Minecraft 源码的工具, 因此最简单的方法是克隆一个 fabric mod 的仓库, 然后调用里面的工具. 考虑到我们的目的是修改 VulkanMod, 不妨直接 git clone https:&#x2F;&#x2F;github.com&#x2F;xCollateral&#x2F;VulkanMod.git (或克隆 fabric-e">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-09-13T06:57:59.000Z">
+<meta property="article:modified_time" content="2023-11-30T15:47:17.279Z">
+<meta property="article:author" content="HamiltonHuaji">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://hamiltonhuaji.github.io/2022/09/13/Minecraft%E6%B8%B2%E6%9F%93%E5%8E%9F%E7%90%86-0/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://hamiltonhuaji.github.io/2022/09/13/Minecraft%E6%B8%B2%E6%9F%93%E5%8E%9F%E7%90%86-0/","path":"2022/09/13/Minecraft渲染原理-0/","title":"Minecraft渲染原理(0)"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Minecraft渲染原理(0) | Ad Astra per Aspera</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Ad Astra per Aspera</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-overview-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">HamiltonHuaji</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+          链接
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://blog.lockon.ml/" title="https:&#x2F;&#x2F;blog.lockon.ml&#x2F;" rel="noopener" target="_blank">Andy Lee</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://zhangshuqiao.org/" title="https:&#x2F;&#x2F;zhangshuqiao.org&#x2F;" rel="noopener" target="_blank">Galaxy Mimi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://blog.yixuan-wang.site/" title="https:&#x2F;&#x2F;blog.yixuan-wang.site&#x2F;" rel="noopener" target="_blank">Tom Wang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://blog.bicpotato.net/" title="https:&#x2F;&#x2F;blog.bicpotato.net" rel="noopener" target="_blank">一个只会摸鱼的大学生罢了[RIP]</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://hamiltonhuaji.github.io/2022/09/13/Minecraft%E6%B8%B2%E6%9F%93%E5%8E%9F%E7%90%86-0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="HamiltonHuaji">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ad Astra per Aspera">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Minecraft渲染原理(0) | Ad Astra per Aspera">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Minecraft渲染原理(0)
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-09-13 14:57:59" itemprop="dateCreated datePublished" datetime="2022-09-13T14:57:59+08:00">2022-09-13</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-11-30 23:47:17" itemprop="dateModified" datetime="2023-11-30T23:47:17+08:00">2023-11-30</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/hint.css/2.4.1/hint.min.css"><p>首先简单介绍一下 Minecraft 源码的获取方式. fabric 开发环境包含了反混淆 Minecraft 源码的工具, 因此最简单的方法是克隆一个 fabric mod 的仓库, 然后调用里面的工具. 考虑到我们的目的是修改 VulkanMod, 不妨直接 <code>git clone https://github.com/xCollateral/VulkanMod.git</code> (或克隆 <a href="%60https://github.com/FabricMC/fabric-example-mod%60">fabric-example-mod</a> 也可).</p>
+<p>在获得了 VulkanMod 的代码仓库后, 在仓库文件夹内执行 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./gradlew genSources</span><br></pre></td></tr></table></figure> 即可生成供 IDE 跳转的未混淆的源码包. 这一源码包的文件位置在<code>VulkanMod/.gradle/loom-cache/1.18.2/</code>下, 是一个包含了一大堆 <code>.class</code> 文件的 jar 包.</p>
+<p>展开这个 jar 包(解压缩或者使用 jd-gui), 应当得到如下的目录树: <span id="more"></span></p>
+<div class='spoiler collapsed'>
+                    <div class='spoiler-title'>目录树</div>
+                    <div class='spoiler-content'><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line">.</span><br><span class="line">├── META-INF</span><br><span class="line">│   └── MANIFEST.MF</span><br><span class="line">├── com</span><br><span class="line">│   └── mojang</span><br><span class="line">│       └── blaze3d</span><br><span class="line">├── minecraft-project-merged-named-sources.iml</span><br><span class="line">└── net</span><br><span class="line">    └── minecraft</span><br><span class="line">        ├── Bootstrap.java</span><br><span class="line">        ├── GameVersion.java</span><br><span class="line">        ├── MinecraftVersion.java</span><br><span class="line">        ├── SaveVersion.java</span><br><span class="line">        ├── SharedConstants.java</span><br><span class="line">        ├── advancement</span><br><span class="line">        ├── block</span><br><span class="line">        ├── class_6148.java</span><br><span class="line">        ├── class_6567.java</span><br><span class="line">        ├── class_6955.java</span><br><span class="line">        ├── client</span><br><span class="line">        ├── command</span><br><span class="line">        ├── data</span><br><span class="line">        ├── datafixer</span><br><span class="line">        ├── enchantment</span><br><span class="line">        ├── entity</span><br><span class="line">        ├── fluid</span><br><span class="line">        ├── inventory</span><br><span class="line">        ├── item</span><br><span class="line">        ├── loot</span><br><span class="line">        ├── nbt</span><br><span class="line">        ├── network</span><br><span class="line">        ├── obfuscate</span><br><span class="line">        ├── particle</span><br><span class="line">        ├── potion</span><br><span class="line">        ├── predicate</span><br><span class="line">        ├── recipe</span><br><span class="line">        ├── resource</span><br><span class="line">        ├── scoreboard</span><br><span class="line">        ├── screen</span><br><span class="line">        ├── server</span><br><span class="line">        ├── sound</span><br><span class="line">        ├── stat</span><br><span class="line">        ├── state</span><br><span class="line">        ├── structure</span><br><span class="line">        ├── tag</span><br><span class="line">        ├── test</span><br><span class="line">        ├── text</span><br><span class="line">        ├── unused</span><br><span class="line">        ├── util</span><br><span class="line">        ├── village</span><br><span class="line">        └── world</span><br></pre></td></tr></table></figure>
+</div>
+                </div>
+<p>而我们感兴趣的内容主要集中在 <code>net/minecraft/client/</code> 目录下. 通过搜索所有 java 人都熟悉的 <code>public static void main</code>, 我们知道可以从这一目录下的 <code>net/minecraft/client/main/Main.java</code> 开始梳理游戏客户端的运行逻辑.</p>
+<div class='spoiler collapsed'>
+                    <div class='spoiler-title'>net/minecraft/client/main/Main.java</div>
+                    <div class='spoiler-content'><figure class="highlight java">
+<table>
+<tr>
+<td class="gutter">
+<pre><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br></pre>
+</td>
+<td class="code">
+<pre><span class="line"><span class="keyword">if</span> (minecraftClient.shouldRenderAsync()) &#123;</span><br><span class="line">    thread2 = <span class="keyword">new</span> <span class="title class_">Thread</span>(<span class="string">&quot;Game thread&quot;</span>)&#123;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">run</span><span class="params">()</span> &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                RenderSystem.initGameThread(<span class="literal">true</span>);</span><br><span class="line">                minecraftClient.run();</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">catch</span> (Throwable throwable) &#123;</span><br><span class="line">                LOGGER.error(<span class="string">&quot;Exception in client thread&quot;</span>, throwable);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">    thread2.start();</span><br><span class="line">    <span class="keyword">while</span> (minecraftClient.isRunning()) &#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    thread2 = <span class="literal">null</span>;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        RenderSystem.initGameThread(<span class="literal">false</span>);</span><br><span class="line">        minecraftClient.run();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (Throwable throwable2) &#123;</span><br><span class="line">        LOGGER.error(<span class="string">&quot;Unhandled game exception&quot;</span>, throwable2);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre>
+</td>
+</tr>
+</table>
+</figure>
+</div>
+                </div>
+<del>
+这段代码充分展现了 ojng 招聘的员工素质, 通过死循环来等待另一个线程结束.
+</del>
+<p>事实上, <code>minecraftClient.shouldRenderAsync()</code> 永远是 <code>false</code>, 因此只有第二个分支会执行; 这导致主线程就是渲染线程.</p>
+<p>我们可以据此跳转到 <div class='spoiler collapsed'>
+                    <div class='spoiler-title'>net/minecraft/client/MinecraftClient.java</div>
+                    <div class='spoiler-content'><figure class="highlight java">
+<table>
+<tr>
+<td class="gutter">
+<pre><span class="line">706</span><br><span class="line">707</span><br><span class="line">708</span><br><span class="line">709</span><br><span class="line">710</span><br><span class="line">711</span><br><span class="line">712</span><br><span class="line">713</span><br><span class="line">714</span><br><span class="line">715</span><br><span class="line">716</span><br><span class="line">717</span><br><span class="line">718</span><br><span class="line">719</span><br><span class="line">720</span><br><span class="line">721</span><br><span class="line">722</span><br><span class="line">723</span><br><span class="line">724</span><br><span class="line">725</span><br><span class="line">726</span><br><span class="line">727</span><br><span class="line">728</span><br><span class="line">729</span><br><span class="line">730</span><br><span class="line">731</span><br><span class="line">732</span><br><span class="line">733</span><br><span class="line">734</span><br><span class="line">735</span><br><span class="line">736</span><br><span class="line">737</span><br><span class="line">738</span><br><span class="line">739</span><br><span class="line">740</span><br></pre>
+</td>
+<td class="code">
+<pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">run</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="built_in">this</span>.thread = Thread.currentThread();</span><br><span class="line">    <span class="keyword">if</span> (Runtime.getRuntime().availableProcessors() &gt; <span class="number">4</span>) &#123;</span><br><span class="line">        <span class="built_in">this</span>.thread.setPriority(<span class="number">10</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="type">boolean</span> <span class="variable">bl</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line">        <span class="keyword">while</span> (<span class="built_in">this</span>.running) &#123;</span><br><span class="line">            <span class="keyword">if</span> (<span class="built_in">this</span>.crashReportSupplier != <span class="literal">null</span>) &#123;</span><br><span class="line">                MinecraftClient.printCrashReport(<span class="built_in">this</span>.crashReportSupplier.get());</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="type">TickDurationMonitor</span> <span class="variable">tickDurationMonitor</span> <span class="operator">=</span> TickDurationMonitor.create(<span class="string">&quot;Renderer&quot;</span>);</span><br><span class="line">                <span class="type">boolean</span> <span class="variable">bl2</span> <span class="operator">=</span> <span class="built_in">this</span>.shouldMonitorTickDuration();</span><br><span class="line">                <span class="built_in">this</span>.profiler = <span class="built_in">this</span>.startMonitor(bl2, tickDurationMonitor);</span><br><span class="line">                <span class="built_in">this</span>.profiler.startTick();</span><br><span class="line">                <span class="built_in">this</span>.recorder.startTick();</span><br><span class="line">                <span class="built_in">this</span>.render(!bl);</span><br><span class="line">                <span class="built_in">this</span>.recorder.endTick();</span><br><span class="line">                <span class="built_in">this</span>.profiler.endTick();</span><br><span class="line">                <span class="built_in">this</span>.endMonitor(bl2, tickDurationMonitor);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">catch</span> (OutOfMemoryError outOfMemoryError) &#123;</span><br><span class="line">                <span class="keyword">if</span> (bl) &#123;</span><br><span class="line">                    <span class="keyword">throw</span> outOfMemoryError;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="built_in">this</span>.cleanUpAfterCrash();</span><br><span class="line">                <span class="built_in">this</span>.setScreen(<span class="keyword">new</span> <span class="title class_">OutOfMemoryScreen</span>());</span><br><span class="line">                System.gc();</span><br><span class="line">                LOGGER.error(LogUtils.FATAL_MARKER, <span class="string">&quot;Out of memory&quot;</span>, outOfMemoryError);</span><br><span class="line">                bl = <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre>
+</td>
+</tr>
+</table>
+</figure>
+</div>
+                </div> 724行的 <code>this.render(!bl)</code> 就是我们要找的目标. 这一函数实在太长, 我们只简单罗列正常渲染一帧时其所做事项, 至于退出/重载资源等行为先不管:</p>
+<ul>
+<li>执行 tick</li>
+<li>更新鼠标位置(用于gui展开的情况) <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1039</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">this</span>.mouse.updateMouse();</span><br></pre></td></tr></table></figure></li>
+<li>对 <code>RenderSystem.modelViewMatrix</code> 进行一番操作 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1045</span><br><span class="line">1046</span><br><span class="line">1047</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">MatrixStack</span> <span class="variable">matrixStack</span> <span class="operator">=</span> RenderSystem.getModelViewStack();</span><br><span class="line">matrixStack.push();</span><br><span class="line">RenderSystem.applyModelViewMatrix();</span><br></pre></td></tr></table></figure></li>
+<li>绑定 <code>MinecraftClient.framebuffer</code> 对应的 FBO <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1049</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">this</span>.framebuffer.beginWrite(<span class="literal">true</span>);</span><br></pre></td></tr></table></figure></li>
+<li>清除雾 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1050</span><br></pre></td><td class="code"><pre><span class="line">BackgroundRenderer.clearFog();</span><br></pre></td></tr></table></figure></li>
+<li>启用材质和剔除 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1052</span><br><span class="line">1053</span><br></pre></td><td class="code"><pre><span class="line">RenderSystem.enableTexture();</span><br><span class="line">RenderSystem.enableCull();</span><br></pre></td></tr></table></figure></li>
+<li>调用 <code>gameRenderer</code> 进行真正的绘制 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1057</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">this</span>.gameRenderer.render(<span class="built_in">this</span>.paused ? <span class="built_in">this</span>.pausedTickDelta : <span class="built_in">this</span>.renderTickCounter.tickDelta, l, tick);</span><br></pre></td></tr></table></figure></li>
+<li>绘制 <code>toast</code> <sup id="fnref:1"><a href="#fn:1" rel="footnote"><span class="hint--top hint--error hint--medium hint--rounded hint--bounce" aria-label="toast是Minecraft在获得成就/获得新配方/完成教程时弹出的框框,大致外观可见`assets/minecraft/textures/gui/toasts.png`.
+">[1]</span></a></sup> <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1059</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">this</span>.toastManager.draw(<span class="keyword">new</span> <span class="title class_">MatrixStack</span>());</span><br></pre></td></tr></table></figure></li>
+<li>绑定默认帧缓冲 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1068</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">this</span>.framebuffer.endWrite();</span><br></pre></td></tr></table></figure></li>
+<li>将 <code>MinecraftClient.framebuffer</code> 对应的 FBO 的内容使用 <code>gameRenderer.blitScreenShader</code> 绘制到默认帧缓冲上 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1072</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">this</span>.framebuffer.draw(<span class="built_in">this</span>.window.getFramebufferWidth(), <span class="built_in">this</span>.window.getFramebufferHeight());</span><br></pre></td></tr></table></figure></li>
+<li>交换颜色缓冲, 使默认帧缓冲上的内容显示到屏幕上 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1076</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">this</span>.window.swapBuffers();</span><br></pre></td></tr></table></figure></li>
+<li>等待合适的时间以使帧率不超过设定的限制 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1079</span><br></pre></td><td class="code"><pre><span class="line">RenderSystem.limitDisplayFPS(j);</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>由上述过程可知, 一切的魔法都发生在 <code>gameRenderer.render</code> 中. 且听下回分解.</p>
+<div id="footnotes">
+<hr>
+<div id="footnotelist">
+<ol style="list-style: none; padding-left: 0; margin-left: 40px">
+<li id="fn:1">
+<span style="display: inline-block; vertical-align: top; padding-right: 10px; margin-left: -40px">1.</span><span style="display: inline-block; vertical-align: top; margin-left: 10px;">toast是Minecraft在获得成就/获得新配方/完成教程时弹出的框框,大致外观可见<code>assets/minecraft/textures/gui/toasts.png</code>.<a href="#fnref:1" rev="footnote"> ↩︎</a></span>
+</li>
+</ol>
+</div>
+</div>
+<link rel="stylesheet" href="/css/spoiler.css" type="text/css"><script src="/js/spoiler.js" type="text/javascript" async></script>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>HamiltonHuaji
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://hamiltonhuaji.github.io/2022/09/13/Minecraft%E6%B8%B2%E6%9F%93%E5%8E%9F%E7%90%86-0/" title="Minecraft渲染原理(0)">https://hamiltonhuaji.github.io/2022/09/13/Minecraft渲染原理-0/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均保留所有权利。转载请联系作者以获得许可！
+  </li>
+</ul>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/09/13/Minecraft%E6%B8%B2%E6%9F%93%E5%8E%9F%E7%90%86-%E5%BA%8F/" rel="prev" title="Minecraft渲染原理(序)">
+                  <i class="fa fa-chevron-left"></i> Minecraft渲染原理(序)
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/09/13/Minecraft%E6%B8%B2%E6%9F%93%E5%8E%9F%E7%90%86-1/" rel="next" title="Minecraft渲染原理(1)">
+                  Minecraft渲染原理(1) <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">HamiltonHuaji</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/mist/" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/HamiltonHuaji" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
